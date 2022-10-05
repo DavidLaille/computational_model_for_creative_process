@@ -12,9 +12,8 @@ cue_originality = 0
 # par ex. : fonction load_data(current_word)
 # ici, je fais comme ci je chargeais le dictionnaire en entier, mais on pourra n'en charger qu'une partie
 # ou morceau par morceau (si c'est trop lourd/lent et si on veut ôter quelques mots peu fréquents)
-dico = ["word1", "word2", "word3", "word4", "word5", "word6", "word7", "word8", "word9", "word10"]
-dico_freq = fct.get_random_frequency(len(dico))
-print(f"Frequence des mots du dictionnaire : {dico_freq}")
+complete_dico = ["word1", "word2", "word3", "word4", "word5", "word6", "word7", "word8", "word9", "word10"
+, "word11", "word12", "word13", "word14", "word15", "word16", "word17", "word18", "word19", "word20"]
 
 # For now we take a fixed value to model the size of the semantic network we consider for each word
 size_of_semantic_network = 3
@@ -46,14 +45,16 @@ reward = [5, 10, 15]
 # à modifier (car saute au mot suivant dès que la condition est respectée)
 # mettre à jour les règles et implémenter la fonction softargmax
 for step in range(steps):
+    # on charge une sous-parti du dictionnaire complet
+    dico = complete_dico[0:10]
     # a chaque étape, on recrée un tableau des fréquences d'association des mots autour du mot actuel
     dico_freq = fct.get_random_frequency(len(dico))
     print(f"Frequence des mots du dictionnaire : {dico_freq}")
 
     # a chaque étape, on recrée un réseau sémantique autour du mot actuel
     close_words = fct.select_close_words(dico, dico_freq, size_of_semantic_network)
-    close_words_adequacy = fct.get_random_adequacy(size_of_semantic_network)
-    close_words_originality = fct.get_random_originality(size_of_semantic_network)
+    close_words_adequacy = fct.get_adequacy(size_of_semantic_network, dico_freq)
+    close_words_originality = fct.get_originality(size_of_semantic_network, dico_freq)
     print(f"Mots voisins pris en compte : {close_words}")
     print(f"'Adequacy' des mots voisins pris en compte : {close_words_adequacy}")
     print(f"'Originality' des mots voisins pris en compte : {close_words_originality}")
