@@ -10,10 +10,10 @@ cue_originality = 0
 # à la place de cette étape, il faudra charger les données depuis un set de données pré-existant
 # par ex. : un set de données/vecteurs construit avec word2vec
 # par ex. : fonction load_data(current_word)
-# ici, je fais comme ci je chargeais le dictionnaire en entier, mais on pourra n'en charger qu'une partie
+# ici, je fais comme si je chargeais le dictionnaire en entier, mais on pourra n'en charger qu'une partie
 # ou morceau par morceau (si c'est trop lourd/lent et si on veut ôter quelques mots peu fréquents)
-complete_dico = ["word1", "word2", "word3", "word4", "word5", "word6", "word7", "word8", "word9", "word10"
-, "word11", "word12", "word13", "word14", "word15", "word16", "word17", "word18", "word19", "word20"]
+complete_dico = ["word1", "word2", "word3", "word4", "word5", "word6", "word7", "word8", "word9", "word10",
+                 "word11", "word12", "word13", "word14", "word15", "word16", "word17", "word18", "word19", "word20"]
 
 # For now we take a fixed value to model the size of the semantic network we consider for each word
 size_of_semantic_network = 3

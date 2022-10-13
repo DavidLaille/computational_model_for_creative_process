@@ -20,6 +20,7 @@ def select_state(possible_states):
     next_state = possible_states[index_value_max]
     return next_state
 
+
 # this function has to be improved
 def compute_value(current_value, reward):
     # the computation of the value is not the final one (it's just to have something)
@@ -28,11 +29,13 @@ def compute_value(current_value, reward):
     # value = current_value + alpha*(expected_reward + expected_value - current_value)
     return value
 
+
 # old function : not useful anymore
 def change_state(current_state=State('default0', 0, 0), next_possible_state=State('default1', 0, 0)):
     current_state.word = next_possible_state.word
     current_state.adequacy = next_possible_state.adequacy
     current_state.originality = next_possible_state.originality
+
 
 # we will change the parameters of this function by using the vectors coming from word2vec
 def select_close_words(dico, dico_freq, size_of_semantic_network):
