@@ -14,7 +14,7 @@ for index, array in enumerate(subMat):
 print(cues)
 
 # écriture des cues dans un fichier csv
-with open('data_csv/cues.csv', 'w', newline='', encoding='utf8') as f:
+with open('data_csv/cues_participant_22.csv', 'w', newline='', encoding='utf8') as f:
     writer = csv.writer(f)
     header = ['cues']
     writer.writerow(header)

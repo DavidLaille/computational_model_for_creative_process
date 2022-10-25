@@ -1,4 +1,4 @@
-import functions as fct
+import functions_v0 as fct
 
 cue = 'word1'
 close_words = ['close_word1', 'close_word2', 'close_word3',

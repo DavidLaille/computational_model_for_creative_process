@@ -2,7 +2,47 @@ from operator import index
 import random
 from classes import State
 import numpy as np
+from gensim.models import KeyedVectors
 
+
+def get_model(path_to_model):
+    # chargement du modèle
+    model = KeyedVectors.load_word2vec_format(path_to_model, binary=True, unicode_errors="ignore")
+    return model
+
+
+# Création du dictionnaire/répertoire de mots
+def create_dico(model):
+    complete_dico = []
+    for index, word in enumerate(model.index_to_key):
+        complete_dico.append(word)
+    return complete_dico
+
+
+def remove_stopwords(existing_dico):
+    new_dico = existing_dico.copy()
+    words_to_remove = ['</s>',
+                       'le', 'la', 'les', 'un', 'une', 'des', 'ce', 'ça', 'ces', 'cette', 'cela', 'celui', 'celle',
+                       'mais', 'ou', 'et', 'donc', 'or', 'ni', 'car', 'néanmoins', 'si', 'toutefois', 'sinon',
+                       'ainsi', 'puis', 'dès', 'jusque', 'cependant', 'pourtant', 'comme', 'lorsque', 'enfin', 'alors',
+                       'puisque', 'dont', 'depuis', 'quelque', 'encore', 'chaque',
+                       'à', 'au', 'aux', 'afin', 'dans', 'par', 'parmi', 'pour', 'en', 'vers', 'avec', 'de', 'du', 'y',
+                       'sans', 'sous', 'sur', 'selon', 'via', 'malgré', 'entre', 'hormis', 'hors',
+                       'quel', 'quelle', 'qui', 'que', 'quoi', 'quand', 'comment', 'pourquoi', 'où',
+                       'je', 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles',
+                       'moi', 'toi', 'lui', 'eux',
+                       'me', 'te', 'ne', 'se', 'leur', 'leurs',
+                       'très', 'peu', 'aussi', 'même', 'tout', 'plus', 'aucun',
+                       'a', '#',
+                       'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'dix',
+                       'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize',
+                       'vingt', 'trente', 'quarante', 'cinquante', 'soixante',
+                       'cent', 'mille', 'million', 'milliard']
+                        # je garde neuf car il peut vouloir dire nouveau
+    for word in words_to_remove:
+        if word in existing_dico:
+            new_dico.remove(word)
+    return new_dico
 
 # this function is not useful for now
 # (to complete later)
@@ -48,6 +88,7 @@ def select_close_words(dico, dico_freq, size_of_semantic_network):
     
     return close_words
 
+
 def get_random_frequency(size_list):
     frequencies = []
     for i in range(size_list):
@@ -58,24 +99,25 @@ def get_random_frequency(size_list):
 
 def get_adequacy(size_list, dico_freq):
     adequacies = []
-    coeff_A = random.random() # we take a random value between 0 and 1
+    coeff_A = random.random()  # we take a random value between 0 and 1
     for i in range(size_list):
         # for the formula below, see article
-        adequacy = coeff_A*np.log10(dico_freq[i])
-        adequacies.append(adequacy) # we put a random percentage
-    
+        adequacy = coeff_A * np.log10(dico_freq[i])
+        adequacies.append(adequacy)  # we put a random percentage
+
     return adequacies
 
 
 def get_originality(size_list, dico_freq):
     originalities = []
-    coeff_O = random.random() # we take a random value between 0 and 1 
+    coeff_O = random.random()  # we take a random value between 0 and 1
     for i in range(size_list):
         # for the formula below, see article
-        l = 1; q = 1
-        originality = (coeff_O**l)*np.log10(dico_freq[i]) + (coeff_O**q)*np.log10(dico_freq[i])
-        originalities.append(originality) # we put a random percentage
-    
+        l = 1;
+        q = 1
+        originality = (coeff_O ** l) * np.log10(dico_freq[i]) + (coeff_O ** q) * np.log10(dico_freq[i])
+        originalities.append(originality)  # we put a random percentage
+
     return originalities
 
 

@@ -9,3 +9,10 @@ class State:
         # à mettre à jour à chaque changement d'état
         self.step = 0
 
+
+class Model:
+    def __init__(self, model):
+        self.model = model
+        self.complete_dico = list()
+        self.sub_dico = list()
+
