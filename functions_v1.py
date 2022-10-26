@@ -47,6 +47,7 @@ def remove_stopwords(existing_dico):
 
 # we will change the parameters of this function by using the vectors coming from word2vec
 def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, method=1):
+    most_similar_words = []
     # méthode 1 : calcule la similarité en se basant sur le calcul de la "distance" entre les vecteurs
     if method == 1:
         most_similar_words = model.most_similar(cue, topn=nb_neighbours, restrict_vocab=vocab_size)
