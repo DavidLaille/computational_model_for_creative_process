@@ -56,7 +56,7 @@ memory_size = -1
 vocab_size = 10000
 
 nb_neighbours = 4
-nb_max_steps = 5
+nb_max_steps = 7
 method = 1
 
 nb_try = 3
@@ -109,13 +109,14 @@ visited_words = list()
 best_word = 'best'
 
 for cue in df['cues']:
-    if cue == df['cues'][2]:
-        break
+    # if cue == df['cues'][2]:
+    #     break
 
     all_neighbours_data = pd.DataFrame()
     num_path = 0
     for t in range(nb_try):
         # initialisation des variables
+        goal_value = 0.8
         current_word = cue
         current_word_likeability = 0
         current_word_similarity = 0

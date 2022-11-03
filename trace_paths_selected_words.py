@@ -9,8 +9,8 @@ cues = pd.read_csv('data/experimental_data/cues.csv', sep=',')
 
 # chargement des données depuis le fichier csv
 for cue in cues['cues']:
-    if cue == cues['cues'][2]:
-        break
+    # if cue == cues['cues'][2]:
+    #     break
 
     paths = pd.read_csv(f'data/paths_{cue}.csv', sep=',', header=0)
     df = pd.read_csv(f'data/all_neighbours_data_{cue}.csv', sep=',', header=0)
