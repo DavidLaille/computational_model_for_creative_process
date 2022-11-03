@@ -1,6 +1,4 @@
-from operator import index
 import random
-from classes import State
 import numpy as np
 from gensim.models import KeyedVectors
 
@@ -21,7 +19,8 @@ def create_dico(model):
 
 def remove_stopwords(existing_dico):
     new_dico = existing_dico.copy()
-    words_to_remove = ['</s>',
+    words_to_remove = ['</s>', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                       'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
                        'le', 'la', 'les', 'un', 'une', 'des', 'ce', 'ça', 'ces', 'cette', 'cela', 'celui', 'celle',
                        'mais', 'ou', 'et', 'donc', 'or', 'ni', 'car', 'néanmoins', 'si', 'toutefois', 'sinon',
                        'ainsi', 'puis', 'dès', 'jusque', 'cependant', 'pourtant', 'comme', 'lorsque', 'enfin', 'alors',
@@ -33,7 +32,7 @@ def remove_stopwords(existing_dico):
                        'moi', 'toi', 'lui', 'eux',
                        'me', 'te', 'ne', 'se', 'leur', 'leurs',
                        'très', 'peu', 'aussi', 'même', 'tout', 'plus', 'aucun',
-                       'a', '#',
+                       '#', '*', '-', "'",
                        'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'dix',
                        'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize',
                        'vingt', 'trente', 'quarante', 'cinquante', 'soixante',
@@ -71,7 +70,7 @@ def get_adequacy_originality_and_likeability(neighbours, similarities):
     # coeffs pour le calcul de l'adéquation (adequacy)
     coeff_A = random.random()  # valeur entre 0 et 1
     # coeffs pour le calcul de l'originalité (originality)
-    l = 1;    q = 1;    coeff_O = random.random()  # valeur entre 0 et 1
+    coeff_O = -1 * random.random()  # valeur entre -1 et 0
     # coeffs pour le calcul de l'agréabilité (likeability)
     alpha = 0.5  # valeur arbitraire
     delta = 1  # valeur arbitraire
@@ -83,7 +82,7 @@ def get_adequacy_originality_and_likeability(neighbours, similarities):
         adequacies.append(adequacy)
 
         # calcul de l'originalité de chaque mot voisin
-        originality = (coeff_O ** l) * similarities[i] + (coeff_O ** q) * similarities[i]**2
+        originality = (coeff_O) * similarities[i] + (coeff_O) * similarities[i]**2
         # originality = (coeff_O ** l) * np.log10(similarities[i]) + (coeff_O ** q) * (np.log10(similarities[i])**2)
         originalities.append(originality)
 
@@ -135,9 +134,10 @@ def update_value(current_word_likeability, current_q_value, goal_value, neighbou
 
 def select_next_word(neighbours_data):
     index_max_value = np.argmax(neighbours_data['likeability'])
-    next_word = neighbours_data['word'][index_max_value]
+    next_word = neighbours_data['neighbours'][index_max_value]
     next_word_likeability = neighbours_data['likeability'][index_max_value]
-    return next_word, next_word_likeability
+    next_word_similarity = neighbours_data['similarity'][index_max_value]
+    return next_word, next_word_likeability, next_word_similarity
 
 
 def select_best_word(word1, word1_likeability, word2, word2_likeability):
