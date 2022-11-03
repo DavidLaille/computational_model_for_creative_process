@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+# import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -14,87 +14,126 @@ for cue in cues['cues']:
 
     paths = pd.read_csv(f'data/paths_{cue}.csv', sep=',', header=0)
     df = pd.read_csv(f'data/all_neighbours_data_{cue}.csv', sep=',', header=0)
+    # print("paths : ", paths)
+    # print("df : ", df)
 
-    G = nx.Graph()
-
-    # nb_max_steps = 5
-    nb_max_steps = max(df['num_step']) - 1
-
-    nodes_chosen_words = []
-    edges_chosen_words = []
-    weights_chosen_words = []
+    nodes = {}
+    nodes_label = {}
+    edges = {}
+    edges_label = {}
     weights = []
-    previous_word = None
-    for index, num_path in enumerate(paths['num_path']):
-        G = nx.Graph()
-        met_words = [paths['cue'][index]]
-        best_word = paths['best_word'][index]
-        similarities = []
-        likeabilities = []
+    pos = {}
 
-        nodes_chosen_words = []
-        edges_chosen_words = []
+    for index, num_path in enumerate(paths['num_path']):
+        G = nx.DiGraph()
+
+        # Calculs pour récupérer le nombre de pas/sauts dans le réseau
+        # nb_max_steps = 5
+        nb_max_steps = max(df['num_step']) - 1
+        print("Nombre de pas : ", nb_max_steps)
+
+        # on initialise une liste de mots visités, le mot choisi et les valeurs d'agréabilité
+        met_words = []
+        met_words_labels = dict()
+        met_words_labels[cue] = cue
+        best_word = 'best'
+        likeabilities = [0]
+
         weights = []
         weighted_edges = []
-        nodes_color = ["#e2ff00"]
+        edges_met_words = []
 
-        previous_word = paths['cue'][index]
-        for i in range(nb_max_steps):
-            col_name_step = "step_" + str(i+1)
-            met_words.append(paths[col_name_step][index])
-            col_name_similarity = "similarity_" + str(i+1)
-            similarities.append(paths[col_name_similarity][index])
-            col_name_likeability = "likeability_" + str(i+1)
-            likeabilities.append(paths[col_name_likeability][index])
-            if previous_word:
-                edges_chosen_words.append((previous_word, paths[col_name_step][index]))
-
-            previous_word = paths[col_name_step][index]
-            if previous_word == best_word:
-                nodes_color.append("red")
-            else:
-                nodes_color.append("#ff7728")
+        nodes = []
+        nodes_size = []
+        nodes_color = []
 
         for id, word in enumerate(df['current_word']):
-            weights.append(df['similarity'][id])
+            if df['num_path'][id] == num_path:
+                if word not in met_words:
+                    met_words.append(word)
+                    met_words_labels[word] = word
+                    weights.append(df['similarity'][id])
 
-        nodes_chosen_words = met_words
-        weights_chosen_words = similarities
+                best_word = df['best_word'][id]
+                # print("Best word : ", best_word)
 
         print("Mots rencontrés : ", met_words)
-        # print("Mots sélectionnés reliés : ", edges_chosen_words)
-        # print("Poids des liens entre les mots : ", weights_chosen_words)
+        nodes = met_words
 
-        for i, edge in enumerate(edges_chosen_words):
-            weighted_edges.append((edges_chosen_words[i][0], edges_chosen_words[i][1], weights_chosen_words[i]))
+        for num_word, word in enumerate(met_words):
+            if num_word < len(met_words)-1:
+                edges_met_words.append((word, met_words[num_word+1]))
+        print("Tous les liens dans le réseau : ", edges_met_words)
+        print("Poids des liens entre les mots : ", weights)
+
+        # si on veut fixer la position des mots rencontrés
+        x_figsize = 14
+        y_figsize = 8
+        x_space_between_words = x_figsize/(len(met_words)+1)
+        x_offset = x_figsize/(2*(len(met_words)+1))
+        y_center = y_figsize/2
+        initial_pos = (x_space_between_words, y_center)
+        current_pos = initial_pos
+        position_met_words = {}
+
+        for word in met_words:
+            if word == cue:
+                position_met_words[word] = initial_pos
+                current_pos = initial_pos
+                # print(f"Position du mot indice {word} : ", current_pos)
+            else:
+                position_met_words[word] = (current_pos[0] + x_space_between_words,
+                                            y_center)
+                current_pos = position_met_words[word]
+                # print(f"Position du mot rencontré {word} : ", current_pos)
+
+        print("Position des mots rencontrés : ", position_met_words)
+
+        for node in nodes:
+            # si c'est le mot-indice, on le colore en vert-pomme
+            if node == paths['cue'][index]:
+                nodes_size.append(4000)
+                nodes_color.append("#c4ff00")
+            # si c'est le mot choisi, on le colore en orange-rouge
+            elif node == best_word:
+                nodes_size.append(5000)
+                nodes_color.append("#ff4000")
+            # si le mot fait partie des mots parcourus, on le colore en orange-pale
+            elif node in met_words:
+                nodes_size.append(3000)
+                nodes_color.append("#ff7728")
+
+        # print("Taille des noeuds : ", nodes_size)
+        # print("Couleur des noeuds : ", nodes_color)
+
+        bigger_weights = [weight*10 for weight in weights]
+        for i, edge in enumerate(edges_met_words):
+            weighted_edges.append((edges_met_words[i][0], edges_met_words[i][1], round(bigger_weights[i], 3)))
         print("Mots reliés + Poids des liens entre les mots : ", weighted_edges)
 
-        G.add_nodes_from(nodes_chosen_words)
-        # G.add_edges_from(edges)
+        G.add_nodes_from(nodes)
+        # G.add_edges_from(edges_met_words)
         G.add_weighted_edges_from(weighted_edges)
-        position = nx.spring_layout(G)
-        nodes_size = [1000]
-        nodes_size.extend([i*3000 for i in likeabilities])
 
-        # print("nodes size : ", nodes_size)
-        # print("length nodes size : ", len(nodes_size))
-        # print("nodes color : ", nodes_color)
-        # print("length nodes color : ", len(nodes_color))
-        print("edges : ", edges_chosen_words)
-        # print("positions : ", position)
+        # print("Position des nœuds : ", position_met_words)
+        # print("Labels des nœuds : ", met_words_label)
 
-        fig = plt.figure(figsize=(10, 6))
-        # nx.draw(G, position, with_labels=True, font_size=8,
-        #         node_color=nodes_color, node_size=nodes_size)
-        nx.draw_circular(G, with_labels=True, font_size=8,
-                         node_color=nodes_color, node_size=nodes_size)
+        fig = plt.figure(figsize=(x_figsize, y_figsize))
+        # nx.draw_circular(G, with_labels=True, font_size=8,
+        #                  node_color=nodes_color, node_size=nodes_size)
+        nx.draw_networkx_nodes(G, position_met_words, node_size=nodes_size, node_color=nodes_color)
+        nx.draw_networkx_edges(G, position_met_words, edgelist=edges_met_words, width=bigger_weights)
+        nx.draw_networkx_labels(G, position_met_words, labels=met_words_labels, font_size=10)
+        # si on veut ajouter les labels des arêtes
+        # nx.draw_networkx_edge_labels(G, position, edges_label, font_size=6)
 
-        file_name = f"data/images/paths/{paths['cue'][index]}_paths_{num_path}.png"
+        # on sauvegarde l'image du chemin parcouru
+        file_name = f"data/images/paths/{paths['cue'][index]}_path_{num_path}.png"
         print(file_name)
         print("#######################################################################################################")
 
-        # on sauvegarde l'image du chemin parcouru
         plt.savefig(file_name)
-        # plt.show()  # pour afficher ensuite
+        # si on veut afficher le réseau
+        # plt.show()
         # puis on supprime/ferme la figure créée
         plt.close(fig)
