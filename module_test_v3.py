@@ -59,7 +59,7 @@ nb_neighbours = 4
 nb_max_steps = 5
 method = 1
 
-nb_try = 2
+nb_try = 3
 q_value = 0
 alpha = 0.5  # valeur arbitraire
 gamma = 0.4  # valeur arbitraire
@@ -109,8 +109,8 @@ visited_words = list()
 best_word = 'best'
 
 for cue in df['cues']:
-    # if cue == df['cues'][2]:
-    #     break
+    if cue == df['cues'][2]:
+        break
 
     all_neighbours_data = pd.DataFrame()
     num_path = 0
@@ -182,6 +182,10 @@ for cue in df['cues']:
             print(f"{num_step} - Mot actuel : {current_word}")
             print(f"q-value : {q_value}")
             print(f"Le mot qui a été choisi est : {best_word}")
+
+            print("Valeur du but à atteindre avant réduction : ", goal_value)
+            goal_value = fct.discount_goal_value(discounting_rate, goal_value)
+            print("Valeur du but à atteindre après réduction : ", goal_value)
             num_step += 1
 
         # on rajoute une ligne dans le dataframe pour prendre en considération les dernières valeurs obtenues

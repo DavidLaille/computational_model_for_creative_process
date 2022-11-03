@@ -151,3 +151,8 @@ def select_best_word(word1, word1_likeability, word2, word2_likeability):
         else:
             print("Les mots sont équivalents, on garde le premier")
         return word1, word1_likeability
+
+
+def discount_goal_value(discounting_rate, goal_value):
+    new_goal_value = (1 - discounting_rate) * goal_value
+    return new_goal_value
