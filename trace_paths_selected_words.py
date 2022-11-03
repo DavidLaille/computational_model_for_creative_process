@@ -62,8 +62,8 @@ for cue in cues['cues']:
         weights_chosen_words = similarities
 
         print("Mots rencontrés : ", met_words)
-        print("Mots sélectionnés reliés : ", edges_chosen_words)
-        print("Poids des liens entre les mots : ", weights_chosen_words)
+        # print("Mots sélectionnés reliés : ", edges_chosen_words)
+        # print("Poids des liens entre les mots : ", weights_chosen_words)
 
         for i, edge in enumerate(edges_chosen_words):
             weighted_edges.append((edges_chosen_words[i][0], edges_chosen_words[i][1], weights_chosen_words[i]))
@@ -76,19 +76,22 @@ for cue in cues['cues']:
         nodes_size = [1000]
         nodes_size.extend([i*3000 for i in likeabilities])
 
-        print("nodes size : ", nodes_size)
-        print("length nodes size : ", len(nodes_size))
-        print("nodes color : ", nodes_color)
-        print("length nodes color : ", len(nodes_color))
+        # print("nodes size : ", nodes_size)
+        # print("length nodes size : ", len(nodes_size))
+        # print("nodes color : ", nodes_color)
+        # print("length nodes color : ", len(nodes_color))
         print("edges : ", edges_chosen_words)
-        print("positions : ", position)
+        # print("positions : ", position)
 
         fig = plt.figure(figsize=(10, 6))
-        nx.draw(G, position, with_labels=True, font_size=8,
-                node_color=nodes_color, node_size=nodes_size)
+        # nx.draw(G, position, with_labels=True, font_size=8,
+        #         node_color=nodes_color, node_size=nodes_size)
+        nx.draw_circular(G, with_labels=True, font_size=8,
+                         node_color=nodes_color, node_size=nodes_size)
 
         file_name = f"data/images/paths/{paths['cue'][index]}_paths_{num_path}.png"
         print(file_name)
+        print("#######################################################################################################")
 
         # on sauvegarde l'image du chemin parcouru
         plt.savefig(file_name)

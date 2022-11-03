@@ -101,7 +101,7 @@ for cue in cues['cues']:
         print("Mots rencontrés : ", met_words)
         print("Tous les mots du réseau : ", all_network)
         print("Tous les liens dans le réseau : ", edges)
-        print("Poids des liens entre les mots : ", weights)
+        # print("Poids des liens entre les mots : ", weights)
 
         # si on veut fixer la position des mots rencontrés
         x_figsize = 14
@@ -120,18 +120,18 @@ for cue in cues['cues']:
             if word == cue:
                 position_met_words[word] = initial_pos
                 current_pos = initial_pos
-                print(f"Position du mot indice {word} : ", current_pos)
+                # print(f"Position du mot indice {word} : ", current_pos)
             else:
                 position_met_words[word] = (current_pos[0] + x_space_between_words,
                                             y_center)
                 current_pos = position_met_words[word]
-                print(f"Position du mot rencontré {word} : ", current_pos)
+                # print(f"Position du mot rencontré {word} : ", current_pos)
             for edge in edges:
                 index_current_word = met_words.index(word)
                 # si on n'est pas sur le dernier mot rencontré
                 if index_current_word < len(met_words) - 1:
                     if edge[0] == word and edge[1] == met_words[index_current_word + 1]:
-                        print("edge solid : ", edge)
+                        # print("edge solid : ", edge)
                         edges_style.append('solid')
                         edge_colors.append('black')
                         edges_transparency.append(1)
@@ -141,7 +141,7 @@ for cue in cues['cues']:
                         edge_met_words_colors.append('black')
                         edges_met_words_transparency.append(1)
                     elif edge[0] == word and edge[1] in met_words:
-                        print("edge dashed : ", edge)
+                        # print("edge dashed : ", edge)
                         edges_style.append('dashed')
                         edge_colors.append('#8f8f8f')
                         edges_transparency.append(0.5)
@@ -151,7 +151,7 @@ for cue in cues['cues']:
                         edge_not_selected_words_colors.append('#8f8f8f')
                         edges_not_selected_words_transparency.append(0.5)
                     elif edge[0] == word:
-                        print("edge dashed : ", edge)
+                        # print("edge dashed : ", edge)
                         edges_style.append('dashed')
                         edge_colors.append('#8f8f8f')
                         edges_transparency.append(0.5)
@@ -161,9 +161,9 @@ for cue in cues['cues']:
                         edge_neighbours_colors.append('#8f8f8f')
                         edges_neighbours_transparency.append(0.5)
 
-        print("Style des arêtes : ", edges_style)
-        print("Couleur des arêtes : ", edge_colors)
-        print("Transparence des arêtes : ", edges_transparency)
+        # print("Style des arêtes : ", edges_style)
+        # print("Couleur des arêtes : ", edge_colors)
+        # print("Transparence des arêtes : ", edges_transparency)
 
         num_neighbour = 1
         previous_word = cue
@@ -178,11 +178,11 @@ for cue in cues['cues']:
                         found = True
                         position_other_words[word] = (position_met_words[edge[0]][0] + x_offset,
                                                       position_met_words[edge[0]][1] + num_neighbour * y_offset)
-                        print(f"Position du mot voisin {word} : ", position_other_words[word])
+                        # print(f"Position du mot voisin {word} : ", position_other_words[word])
                 num_neighbour += 1
 
-        print("Position des mots rencontrés : ", position_met_words)
-        print("Position des autres mots du réseau : ", position_other_words)
+        # print("Position des mots rencontrés : ", position_met_words)
+        # print("Position des autres mots du réseau : ", position_other_words)
 
         position_all_words.update(position_met_words)
         position_all_words.update(position_other_words)
@@ -211,9 +211,9 @@ for cue in cues['cues']:
                 nodes_color.append("#8f8f8f")
                 nodes_transparency.append(0.5)
 
-        print("Taille des noeuds : ", nodes_size)
-        print("Couleur des noeuds : ", nodes_color)
-        print("Transparence des noeuds : ", nodes_transparency)
+        # print("Taille des noeuds : ", nodes_size)
+        # print("Couleur des noeuds : ", nodes_color)
+        # print("Transparence des noeuds : ", nodes_transparency)
 
         bigger_weights = [weight*10 for weight in weights]
         for i, edge in enumerate(edges):
@@ -224,8 +224,8 @@ for cue in cues['cues']:
         # G.add_edges_from(edges)
         G.add_weighted_edges_from(weighted_edges)
 
-        print("Position des noeuds : ", position_all_words)
-        print("Labels des noeuds : ", nodes_label)
+        # print("Position des noeuds : ", position_all_words)
+        # print("Labels des noeuds : ", nodes_label)
 
         fig = plt.figure(figsize=(x_figsize, y_figsize))
         nx.draw_networkx_nodes(G, position_all_words, node_size=nodes_size, node_color=nodes_color,
@@ -251,8 +251,10 @@ for cue in cues['cues']:
         # nx.draw_networkx_edge_labels(G, position, edges_label, font_size=6)
 
         # on sauvegarde l'image du chemin parcouru
-        file_name = f"data/images/complete_paths/{paths['cue'][index]}_path_{num_path}.png"
+        file_name = f"data/images/complete_paths/{paths['cue'][index]}_complete_path_{num_path}.png"
         print(file_name)
+        print("#######################################################################################################")
+
         plt.savefig(file_name)
         # si on veut afficher le réseau
         # plt.show()
