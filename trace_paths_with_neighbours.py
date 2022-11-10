@@ -1,5 +1,4 @@
 import pandas as pd
-# import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -12,8 +11,13 @@ for cue in cues['cues']:
     # if cue == cues['cues'][2]:
     #     break
 
-    paths = pd.read_csv(f'data/paths_{cue}.csv', sep=',', header=0)
-    df = pd.read_csv(f'data/all_neighbours_data_{cue}.csv', sep=',', header=0)
+    # si on veut tester un seul mot-indice
+    word_to_test = "avis"
+    if cue != word_to_test:
+        continue
+
+    paths = pd.read_csv(f'data/dataframes/paths_{cue}.csv', sep=',', header=0)
+    df = pd.read_csv(f'data/dataframes/all_neighbours_data_{cue}.csv', sep=',', header=0)
     # print("paths : ", paths)
     # print("df : ", df)
 
@@ -30,10 +34,10 @@ for cue in cues['cues']:
         # Calculs pour récupérer le nombre de pas/sauts dans le réseau
         # et le nombre de voisins pris à chaque nouveau pas/saut
         # nb_max_steps = 5
-        nb_max_steps = max(df['num_step']) - 1
-        print("Nombre de pas : ", nb_max_steps)
+        nb_steps = paths['nb_steps'][index]
+        print("Nombre de pas : ", nb_steps)
         # nb_neighbours = 4
-        nb_neighbours = int(((len(df['cue']) / len(paths['num_path'])) - 1) / nb_max_steps)
+        nb_neighbours = int(((len(df['cue']) / len(paths['num_path'])) - 1) / nb_steps)
         print("Nombre de voisins : ", nb_neighbours)
 
         # cue = df['cue'][index]
@@ -43,7 +47,7 @@ for cue in cues['cues']:
         nodes_label[cue] = cue
 
         # on initialise une liste de mots visités, le mot choisi et les valeurs d'agréabilité
-        met_words = [cue]
+        met_words = []
         met_words_labels = dict()
         met_words_labels[cue] = cue
         best_word = 'best'
@@ -104,8 +108,8 @@ for cue in cues['cues']:
         # print("Poids des liens entre les mots : ", weights)
 
         # si on veut fixer la position des mots rencontrés
-        x_figsize = 14
-        y_figsize = 8
+        x_figsize = 140
+        y_figsize = 80
         x_space_between_words = x_figsize/(len(met_words)+1)
         x_offset = x_figsize/(2*(len(met_words)+1))
         y_offset = y_figsize/10
