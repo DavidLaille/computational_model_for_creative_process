@@ -313,9 +313,9 @@ def select_best_word(word1, word1_likeability, word2, word2_likeability):
 def select_best_word_among_all_visited_words(neighbours_data_one_path):
     index_max_value = np.argmax(neighbours_data_one_path['likeability_to_cue'])
     best_word = neighbours_data_one_path['current_word'][index_max_value]
-    if '_' in best_word:
+    while '_' in best_word:  # on supprime le tag indiquant le numéro du step
         # print("best word avant : ", best_word)
-        best_word = best_word[:-2]
+        best_word = best_word[:-1]
         # print("best word après : ", best_word)
     best_word_likeability = neighbours_data_one_path['likeability_to_cue'][index_max_value]
     return best_word, best_word_likeability
