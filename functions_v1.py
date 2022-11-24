@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import math
 from gensim.models import KeyedVectors
 
 
@@ -119,6 +120,7 @@ discount_goal_value(float, float) => float
 ########################################################################################################################
 '''
 
+
 def get_model(path_to_model):
     # chargement du modèle
     model = KeyedVectors.load_word2vec_format(path_to_model, binary=True, unicode_errors="ignore")
@@ -133,31 +135,17 @@ def create_dico(model):
     return complete_dico
 
 
-def remove_stopwords(existing_dico):
-    new_dico = existing_dico.copy()
-    words_to_remove = ['</s>', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-                       'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-                       'le', 'la', 'les', 'un', 'une', 'des', 'ce', 'ça', 'ces', 'cette', 'cela', 'celui', 'celle',
-                       'mais', 'ou', 'et', 'donc', 'or', 'ni', 'car', 'néanmoins', 'si', 'toutefois', 'sinon',
-                       'ainsi', 'puis', 'dès', 'jusque', 'cependant', 'pourtant', 'comme', 'lorsque', 'enfin', 'alors',
-                       'puisque', 'dont', 'depuis', 'quelque', 'encore', 'chaque',
-                       'à', 'au', 'aux', 'afin', 'dans', 'par', 'parmi', 'pour', 'en', 'vers', 'avec', 'de', 'du', 'y',
-                       'sans', 'sous', 'sur', 'selon', 'via', 'malgré', 'entre', 'hormis', 'hors',
-                       'quel', 'quelle', 'qui', 'que', 'quoi', 'quand', 'comment', 'pourquoi', 'où',
-                       'je', 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles',
-                       'moi', 'toi', 'lui', 'eux',
-                       'me', 'te', 'ne', 'se', 'leur', 'leurs',
-                       'très', 'peu', 'aussi', 'même', 'tout', 'plus', 'aucun',
-                       '#', '*', '-', "'",
-                       'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'dix',
-                       'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize',
-                       'vingt', 'trente', 'quarante', 'cinquante', 'soixante',
-                       'cent', 'mille', 'million', 'milliard']
-    # problème des homonymes : neuf (le nb VS nouveau), son (le sien VS le bruit), ...
-    for word in words_to_remove:
-        if word in existing_dico:
-            new_dico.remove(word)
-    return new_dico
+def get_max_likeability(word2vec_model, cue, s_impact_on_a, s_impact_on_o, adequacy_influence, vocab_size):
+    likeabilities = []
+    neighbours = word2vec_model.similar_by_key(key=cue, topn=100, restrict_vocab=vocab_size)
+    for neighbour in neighbours:
+        likeability = get_likeability_to_cue(word2vec_model, cue, neighbour[0],
+                                             s_impact_on_a, s_impact_on_o, adequacy_influence)
+        # print(f"Cue - Neighbour - Similarity - Likeability : {cue} - {neighbour[0]} - {neighbour[1]} - {likeability}")
+        likeabilities.append(likeability)
+    # print(likeabilities)
+    max_likeability = max(likeabilities)
+    return max_likeability
 
 
 def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, method=1):
@@ -171,14 +159,14 @@ def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, metho
     # méthode 3 : identique à la méthode 1 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 3:
-        N = 20
-        most_similar_words = model.most_similar(cue, topn=N, restrict_vocab=vocab_size)
+        pool_size = nb_neighbours * 3
+        most_similar_words = model.most_similar(cue, topn=pool_size, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
     # méthode 4 : identique à la méthode 2 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 4:
-        N = 20
-        most_similar_words = model.most_similar_cosmul(cue, topn=N, restrict_vocab=vocab_size)
+        pool_size = nb_neighbours * 3
+        most_similar_words = model.most_similar_cosmul(cue, topn=pool_size, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
 
     neighbours = []
@@ -203,7 +191,7 @@ def get_adequacy_originality_and_likeability(neighbours, similarities, s_impact_
         adequacies.append(adequacy)
 
         # calcul de l'originalité de chaque mot voisin
-        originality = compute_adequacy(similarities[i], s_impact_on_o)
+        originality = compute_originality(similarities[i], s_impact_on_o)
         # originality = coeff_O * np.log10(similarities[i]) + coeff_O * (np.log10(similarities[i])**2)
         originalities.append(originality)
 
@@ -238,12 +226,14 @@ def get_random_adequacy_originality_and_likeability(neighbours, adequacy_influen
 
 
 def compute_adequacy(similarity, s_impact_on_a):
-    adequacy = s_impact_on_a * similarity
+    # adequacy = s_impact_on_a * similarity
+    adequacy = 0.27 * similarity + 0.74
     return adequacy
 
 
 def compute_originality(similarity, s_impact_on_o):
-    originality = s_impact_on_o * similarity + s_impact_on_o * similarity ** 2
+    # originality = s_impact_on_o * similarity + s_impact_on_o * similarity ** 2
+    originality = -1.25 * similarity + 0.60 * similarity ** 2 + 0.79
     return originality
 
 
@@ -321,6 +311,52 @@ def select_best_word_among_all_visited_words(neighbours_data_one_path):
     return best_word, best_word_likeability
 
 
+def discount_goal_value_linear(decrease_amount, goal_value):
+    new_goal_value = goal_value - decrease_amount
+    return new_goal_value
+
+
 def discount_goal_value(discounting_rate, goal_value):
+    # cette fonction est une exponentielle de base a avec : a = 1 - discounting_rate
     new_goal_value = (1 - discounting_rate) * goal_value
+    return new_goal_value
+
+
+def discount_goal_value_exp(discounting_rate, goal_value):
+    # si le discounting_rate est élevé, la diminution de la goal_value sera lente au départ puis très rapide
+    new_goal_value = (-1) * math.exp((-1) * discounting_rate * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-2) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-3) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-4) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-5) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-6) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-7) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-8) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-9) * goal_value) + 1
+    # new_goal_value = (-1) * math.exp((-10) * goal_value) + 1
+    return new_goal_value
+
+
+def discount_goal_value_log(discounting_rate, goal_value):
+    # si le discounting_rate est élevé, la diminution de la goal_value sera lente au départ puis très rapide
+    new_goal_value = (math.log(goal_value)/discounting_rate) + 1
+    # new_goal_value = (math.log(goal_value)/2) + 1
+    # new_goal_value = (math.log(goal_value)/3) + 1
+    # new_goal_value = (math.log(goal_value)/4) + 1
+    # new_goal_value = (math.log(goal_value)/5) + 1
+    # new_goal_value = (math.log(goal_value)/6) + 1
+    # new_goal_value = (math.log(goal_value)/7) + 1
+    # new_goal_value = (math.log(goal_value)/8) + 1
+    # new_goal_value = (math.log(goal_value)/9) + 1
+    # new_goal_value = (math.log(goal_value)/10) + 1
+    return new_goal_value
+
+
+def discount_goal_value_sqrt(goal_value):
+    # avec la fonction "racine-carrée", la diminution de la goal_value sera lente au départ puis très rapide
+    if goal_value == 1:
+        new_goal_value = 0.99
+        # on décrémente un peu la goal_value car sqrt(1) = 1 (on ne bougera pas si on applique le calcul)
+    else:
+        new_goal_value = math.sqrt(goal_value)
     return new_goal_value

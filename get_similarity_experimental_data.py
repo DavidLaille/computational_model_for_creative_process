@@ -38,9 +38,11 @@ for index in range(len(df)):
     if response != response:  # on vérifie que response n'est pas 'nan'
         continue
 
-    if word2vec_model.has_index_for(response):
+    if word2vec_model.has_index_for(response):  # on vérifie que le mot réponse est dans le modèle word2vec
         similarity = word2vec_model.similarity(cue, response)
         df['similarity'][index] = similarity
 
-print(df.head())
+# print(df.head())
+# enregistrement du dataframe modifié
 df.to_csv('data/experimental_data/all_data_with_sim_from_word2vec.csv', sep=',')
+print("Fichier sauvegardé avec succès.")

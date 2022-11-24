@@ -50,7 +50,6 @@ for cue in cues['cues']:
         met_words = []
         met_words_labels = dict()
         met_words_labels[cue] = cue
-        best_word = 'best'
         likeabilities = [0]
 
         nodes = []
@@ -81,11 +80,18 @@ for cue in cues['cues']:
         edge_colors = []
         edges_transparency = []
 
+        best_word = paths['best_word'][index]
+        # print("Best word : ", best_word)
+
         for id, word in enumerate(df['current_word']):
+            word_without_tag = word
+            while '_' in word_without_tag:
+                word_without_tag = word_without_tag[:-1]
+            # print(f"Mot : {word} & Mot sans le tag : {word_without_tag}")
             if df['num_path'][id] == num_path:
-                if word not in met_words:
-                    met_words.append(word)
-                    met_words_labels[word] = word
+                if word_without_tag not in met_words:
+                    met_words.append(word_without_tag)
+                    met_words_labels[word_without_tag] = word_without_tag
                 if df['likeability'][id] == df['likeability'][id]:  # on vérifie que ce n'est pas NaN
                     # si le mot voisin actuel n'est pas enregistré dans le réseau, on l'ajoute
                     if df['neighbours'][id] not in all_network:
@@ -93,9 +99,9 @@ for cue in cues['cues']:
                         nodes_label[df['neighbours'][id]] = df['neighbours'][id]
                         likeabilities.append(df['likeability'][id])
                     # si le lien entre le mot actuel et son voisin n'est pas enregistré, on l'ajoute
-                    if (df['current_word'][id], df['neighbours'][id]) not in edges:
-                        edges.append((df['current_word'][id], df['neighbours'][id]))
-                        edges_label[(df['current_word'][id], df['neighbours'][id])] = round(df['similarity'][id], 3)
+                    if (word_without_tag, df['neighbours'][id]) not in edges:
+                        edges.append((word_without_tag, df['neighbours'][id]))
+                        edges_label[(word_without_tag, df['neighbours'][id])] = round(df['similarity'][id], 3)
                         weights.append(round(df['similarity'][id], 3))  # on arrondit à 3 décimales
                 else:
                     best_word = df['best_word'][id]
@@ -108,8 +114,8 @@ for cue in cues['cues']:
         # print("Poids des liens entre les mots : ", weights)
 
         # si on veut fixer la position des mots rencontrés
-        x_figsize = 140
-        y_figsize = 80
+        x_figsize = nb_steps * 2
+        y_figsize = nb_neighbours + 2
         x_space_between_words = x_figsize/(len(met_words)+1)
         x_offset = x_figsize/(2*(len(met_words)+1))
         y_offset = y_figsize/10
@@ -217,7 +223,7 @@ for cue in cues['cues']:
 
         # print("Taille des noeuds : ", nodes_size)
         # print("Couleur des noeuds : ", nodes_color)
-        # print("Transparence des noeuds : ", nodes_transparency)
+        # print("Transparence des nœuds : ", nodes_transparency)
 
         bigger_weights = [weight*10 for weight in weights]
         for i, edge in enumerate(edges):
@@ -228,8 +234,8 @@ for cue in cues['cues']:
         # G.add_edges_from(edges)
         G.add_weighted_edges_from(weighted_edges)
 
-        # print("Position des noeuds : ", position_all_words)
-        # print("Labels des noeuds : ", nodes_label)
+        # print("Position des nœuds : ", position_all_words)
+        # print("Labels des nœuds : ", nodes_label)
 
         fig = plt.figure(figsize=(x_figsize, y_figsize))
         nx.draw_networkx_nodes(G, position_all_words, node_size=nodes_size, node_color=nodes_color,

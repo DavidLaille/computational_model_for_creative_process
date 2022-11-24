@@ -1,52 +1,83 @@
 import functions_v1 as fct
 import pandas as pd
 
+"""
+model_type = 0  : meilleur mot temporaire choisi parmi les N voisins actuels (dans son "champs de vision"), 
+                  meilleur mot final choisi parmi les N derniers mots découverts
+                  propriété : "vue locale sans mémoire"
+                  surnom : "le poisson rouge"
+                  
+model_type = 1  : meilleur mot temporaire choisi parmi ses voisins actuels et le meilleur mot trouvé jusque-là   
+                  meilleur mot final choisi parmi les N derniers mots découverts et le meilleur mot trouvé jusque-là
+                  propriété : "vue locale avec mémoire" 
+                  surnom : "le petit Poucet"
+                  
+model_type = 2  : meilleur mot temporaire choisi parmi les N voisins actuels (dans son "champs de vision"), 
+                  meilleur mot final choisi parmi l'ensemble des mots visités
+                  propriété : "vue globale sans mémoire permanente"
+                  surnom : "le bateau naviguant dans le brouillard avant l'éclaircie"
+                                    
+model_type = 3  : meilleur mot temporaire choisi parmi l'ensemble des mots visités jusqu'alors
+                  meilleur mot final choisi parmi l'ensemble des mots visités
+                  propriété : "vue globale avec mémoire permanente"
+                  surnom : "le bateau naviguant par beau temps, vue dégagée"
+
+"""
 
 """
 Paramètres du modèle
-   Paramètres de mapping
-       s_impact_on_a       : représente la proportionnalité entre adéquation et fréquence d'association (similarité)
-       s_impact_on_o       : représente la proportionnalité entre originalité et fréquence d'association (similarité)
-       adequacy_influence  : représente l'influence de l'adéquation dans le calcul d'agréabilité
-                             l'influence de l'originalité est obtenue en faisant : 1 - adequacy_influence
+    Type de modèle
+        word2vec_model          : le modèle word2vec pré-entraîné à charger
+        model_type              : le type de modèle qu'on veut utiliser
+                                  model_type = 0 : "vue locale sans mémoire"
+                                  model_type = 1 : "vue locale avec mémoire" 
+                                  model_type = 2 : "vue globale sans mémoire"
+                                  model_type = 3 : "vue globale avec mémoire" 
+    Paramètres de mapping
+        s_impact_on_a           : représente la proportionnalité entre adéquation et fréquence d'association (similarité)
+        s_impact_on_o           : représente la proportionnalité entre originalité et fréquence d'association (similarité)
+        adequacy_influence      : représente l'influence de l'adéquation dans le calcul d'agréabilité
+                                  l'influence de l'originalité est obtenue en faisant : 1 - adequacy_influence
 
-   Paramètres de but
-       goal_value          : le seuil de "likeability" (entre 0 et 1) à partir duquel on arrête la recherche
-       discounting_rate    : le taux (entre 0 et 1) avec lequel on va réduire la valeur du but à atteindre (goal_value)
+    Paramètres de but
+        goal_value              : le seuil de "likeability" (entre 0 et 1) à partir duquel on arrête la recherche
+        discounting_rate        : le taux (entre 0 et 1) avec lequel on va réduire la valeur du but à atteindre (goal_value)
 
-   Paramètres de capacité
-       memory_size         : le nombre de mots que le modèle gardera en mémoire
-                             si memory_size = -1 alors on considère une capacité de mémoire illimitée
-       vocab_size          : la taille du lexique dans lequel on pioche les mots qui composeront le réseau
-                             les dictionnaires étant triés par fréquence d'occurrence,
-                             on pourra éliminer les mots rares en restreignant la taille du lexique
+    Paramètres de capacité
+        memory_size             : le nombre de mots que le modèle gardera en mémoire
+                                  si memory_size = -1 alors on considère une capacité de mémoire illimitée
+        vocab_size              : la taille du lexique dans lequel on pioche les mots qui composeront le réseau
+                                  les dictionnaires étant triés par fréquence d'occurrence,
+                                  on pourra éliminer les mots rares en restreignant la taille du lexique
 
-   Paramètres du réseau sémantique
-       nb_neighbours       : le nombre de mots voisins qu'on veut obtenir (le nombre de branches issues d'un mot)
-       nb_max_steps        : le nombre d'itérations maximal réalisé par le modèle (la profondeur du réseau sémantique)
-       method              : la méthode utilisée pour déterminer les mots voisins
-                             method = 1 : most_similar() - "distance vectorielle" ou "cosine similarity"
-                             method = 2 : most_similar_cosmul() - "multiplicative combination objective"
+    Paramètres du réseau sémantique
+        nb_neighbours           : le nombre de mots voisins qu'on veut obtenir (le nombre de branches issues d'un mot)
+        nb_max_steps            : le nombre d'itérations maximal réalisé par le modèle (la profondeur du réseau sémantique)
+        method                  : la méthode utilisée pour déterminer les mots voisins
+                                  method = 1 : most_similar() - "distance vectorielle" ou "cosine similarity"
+                                  method = 2 : most_similar_cosmul() - "multiplicative combination objective"
                                                                    proposed by Omer Levy and Yoav Goldberg
 
-   Paramètres d'apprentissage par renforcement (RL)
-       q-value             : valeur associée à un état (ici un mot)
-                             et à l'action réalisée (ici la sélection du mot voisin)
-       alpha               : taux d'apprentissage de l'algo de RL (détermine la vitesse d'apprentissage)
-       gamma               : taux de prise en compte de la récompense future (détermine dans quelle mesure
-                             on prend en compte les états futurs lors du calcul de la valeur)
+    Paramètres d'apprentissage par renforcement (RL)
+         q-value                : valeur associée à un état (ici un mot)
+                                  et à l'action réalisée (ici la sélection du mot voisin)
+         alpha                  : taux d'apprentissage de l'algo de RL (détermine la vitesse d'apprentissage)
+         gamma                  : taux de prise en compte de la récompense future (détermine dans quelle mesure
+                                  on prend en compte les états futurs lors du calcul de la valeur)
 """
 
 
 class ComputationalModel:
-    def __init__(self, word2vec_model,
+    def __init__(self, word2vec_model, model_type=2,
                  s_impact_on_a=0.5, s_impact_on_o=0.5, adequacy_influence=0.5,
-                 initial_goal_value=0.8, discounting_rate=0.01,
+                 initial_goal_value=1, discounting_rate=0.07,
                  memory_size=7, vocab_size=10000,
-                 nb_neighbours=5, nb_max_steps=100, method=1,
+                 nb_neighbours=5, nb_max_steps=100, method=3,
                  alpha=0.5, gamma=0.5):
 
         self.word2vec_model = word2vec_model
+        self.model_type = model_type
+
         self.s_impact_on_a = s_impact_on_a
         self.s_impact_on_o = s_impact_on_o
         self.adequacy_influence = adequacy_influence
@@ -123,6 +154,7 @@ class ComputationalModel:
             current_word_likeability = 0
             current_word_similarity = 0
             num_step = 0
+            last_step = 0
             q_value = 0
             # une variable pour représenter le mot final choisi par le modèle
             best_word = current_word
@@ -155,7 +187,7 @@ class ComputationalModel:
                 self.neighbours_data['likeability'] = likeabilities
 
                 self.neighbours_data['num_path'] = t + 1  # le +1 sert pour démarrer à 1
-                self.neighbours_data['num_step'] = num_step + 1  # le +1 sert pour démarrer à 1
+                self.neighbours_data['num_step'] = num_step
                 self.neighbours_data['cue'] = cue
                 self.neighbours_data['best_word'] = best_word
                 self.neighbours_data['temporary_best_word'] = temporary_best_word
@@ -182,15 +214,28 @@ class ComputationalModel:
                 # on ajoute le nouveau mot et sa valeur d'agréabilité dans la liste des mots visités
                 visited_words.append([current_word, current_word_likeability, current_word_similarity])
 
-                # on compare les mots pour savoir lequel est le meilleur parmi les voisins du mot actuel
-                # ici : meilleur = haute agréabilité
-                # on récupère le résultat dans les variables temporary_best_word et temporary_best_word_likeability
-                temporary_best_word, temporary_best_word_likeability = fct.select_best_word(temporary_best_word,
-                                                                                            temporary_best_word_likeability,
-                                                                                            current_word,
-                                                                                            current_word_likeability)
-                # on compare les mots pour savoir lequel est le meilleur parmi tous les mots rencontrés jusqu'alors
-                best_word, best_word_likeability = fct.select_best_word_among_all_visited_words(neighbours_data_one_path)
+                if self.model_type == 0:
+                    temporary_best_word = current_word
+                    temporary_best_word_likeability = current_word_likeability
+                    best_word = temporary_best_word
+                    best_word_likeability = temporary_best_word_likeability
+                elif self.model_type == 1:
+                    temporary_best_word, temporary_best_word_likeability = fct.select_best_word(temporary_best_word,
+                                                                                                temporary_best_word_likeability,
+                                                                                                current_word,
+                                                                                                current_word_likeability)
+                    best_word = temporary_best_word
+                    best_word_likeability = temporary_best_word_likeability
+                elif self.model_type == 2:
+                    temporary_best_word = current_word
+                    temporary_best_word_likeability = current_word_likeability
+                    best_word = temporary_best_word
+                    best_word_likeability = temporary_best_word_likeability
+                elif self.model_type == 3:
+                    temporary_best_word, temporary_best_word_likeability = fct.select_best_word_among_all_visited_words(
+                        neighbours_data_one_path)
+                    best_word = temporary_best_word
+                    best_word_likeability = temporary_best_word_likeability
 
                 # on ajoute le mot dans la liste des mots en mémoire
                 if not ({current_word} & set(words_in_memory)):
@@ -209,55 +254,65 @@ class ComputationalModel:
                 # print(f"q-value : {q_value}")
                 # print(f"Le mot qui a été choisi est : {best_word}")
 
-                final_goal_value = goal_value
-
+                # pour la première boucle (celle correspondant au mot-indice), on ne diminue pas la goal_value
+                if num_step == 0:
+                    pass
                 # print("Valeur du but à atteindre avant réduction : ", goal_value)
-                goal_value = fct.discount_goal_value(self.discounting_rate, goal_value)
-                # print("Valeur du but à atteindre après réduction : ", goal_value)
+                else:
+                    goal_value = fct.discount_goal_value(self.discounting_rate, goal_value)
+                    # print("Valeur du but à atteindre après réduction : ", goal_value)
+
+                last_step = num_step
                 num_step += 1
 
-            # à la fin, on choisit le meilleur des mots parmi tous les mots parcourus
-            # meilleur mot = celui qui a la plus grande valeur d'agréabilité (likeability) parmi tous les mots parcourus
-            best_word, best_word_likeability = fct.select_best_word_among_all_visited_words(neighbours_data_one_path)
+            if self.model_type == 2:
+                # à la fin, on choisit le meilleur des mots parmi tous les mots parcourus
+                # meilleur mot = celui qui a la plus grande valeur d'agréabilité (likeability) parmi tous les mots parcourus
+                best_word, best_word_likeability = fct.select_best_word_among_all_visited_words(neighbours_data_one_path)
+            elif self.model_type == 3:
+                # à la fin, on choisit le meilleur des mots parmi tous les mots parcourus
+                # meilleur mot = celui qui a la plus grande valeur d'agréabilité (likeability) parmi tous les mots parcourus
+                best_word, best_word_likeability = fct.select_best_word_among_all_visited_words(neighbours_data_one_path)
+
             best_word_similarity = fct.get_similarity_between_words(self.word2vec_model, cue, best_word)
 
             # on rajoute une ligne dans le dataframe pour prendre en considération les dernières valeurs obtenues
-            self.all_neighbours_data.loc[len(self.all_neighbours_data.axes[0]) + 1] = [t + 1, num_step + 1, cue,
+            self.all_neighbours_data.loc[len(self.all_neighbours_data.axes[0]) + 1] = [t + 1, num_step, cue,
                                                                                        best_word, temporary_best_word,
                                                                                        q_value, current_word,
                                                                                        None, None, None, None, None,
                                                                                        likeability_to_cue,
                                                                                        goal_value]
-            neighbours_data_one_path.loc[len(neighbours_data_one_path.axes[0]) + 1] = [t + 1, num_step + 1, cue,
+            neighbours_data_one_path.loc[len(neighbours_data_one_path.axes[0]) + 1] = [t + 1, num_step, cue,
                                                                                        best_word, temporary_best_word,
                                                                                        q_value, current_word,
                                                                                        None, None, None, None, None,
                                                                                        likeability_to_cue,
                                                                                        goal_value]
             print("Mots visités : ", visited_words)
-            print("Nombre de steps : ", num_step)
+            print("Nombre de steps : ", last_step)
             # print("Last Goal value : ", goal_value)
             # print("Final Goal value : ", final_goal_value)
             # print("Neighbours data one path : ", neighbours_data_one_path)
             print("Best word : ", best_word)
             print("Best word likeability : ", best_word_likeability)
 
-            row = [num_path + 1, num_step,
+            row = [num_path + 1, last_step,
                    best_word, best_word_similarity, best_word_likeability,
-                   final_goal_value, q_value, cue]
+                   goal_value, q_value, cue]
             for i in range(self.nb_max_steps):
-                if i + 1 <= num_step:
+                if i + 1 <= last_step:
                     row.append(visited_words[i + 1][0])
                 else:
                     row.append("NA")
             for j in range(self.nb_max_steps):
-                if j + 1 <= num_step:
-                    row.append(visited_words[j + 1][1])
+                if j + 1 <= last_step:
+                    row.append(visited_words[j + 1][2])
                 else:
                     row.append("NA")
             for k in range(self.nb_max_steps):
-                if k + 1 <= num_step:
-                    row.append(visited_words[k + 1][2])
+                if k + 1 <= last_step:
+                    row.append(visited_words[k + 1][1])
                 else:
                     row.append("NA")
             # print(row)

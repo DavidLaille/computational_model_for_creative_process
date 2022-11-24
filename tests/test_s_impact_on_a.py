@@ -24,21 +24,23 @@ df = pd.read_csv('C:/dev/PycharmProjects/computational_model_for_creative_proces
                  sep=',')
 print("Fichier cues.csv chargé avec succès.")
 
+model_type = 2
+
 ########################################################################################################################
 # Initialisation des paramètres du modèle computationnel
 s_impacts_on_a = np.arange(start=0, stop=1, step=0.01)
 s_impact_on_o = 0.5
 adequacy_influence = 0.5
 
-initial_goal_value = 0.8
-discounting_rate = 0.01  # (1%)
+initial_goal_value = 1
+discounting_rate = 0.05  # (1%)
 
 memory_size = 7
 vocab_size = 10000
 
 nb_neighbours = 5
 nb_max_steps = 100
-method = 1
+method = 3
 
 alpha = 0.5
 gamma = 0.5
@@ -55,6 +57,8 @@ first_word = []
 similarity_chosen_word = []
 likeability_chosen_word = []
 final_goal_value = []
+chosen_words = []
+
 
 for cue in df['cues']:
     # # Si on veut tester seulement un certain nombre de mots-indice
@@ -73,11 +77,12 @@ for cue in df['cues']:
     similarity_chosen_word = []
     likeability_chosen_word = []
     final_goal_value = []
+    chosen_words = []
 
     # Sorties du modèle en fonction de s_impact_on_a
     for s_impact_on_a in s_impacts_on_a:
         # Initialisation du modèle computationnel
-        model = ComputationalModel(word2vec_model=word2vec_model,
+        model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
                                    s_impact_on_a=s_impact_on_a, s_impact_on_o=s_impact_on_o,
                                    adequacy_influence=adequacy_influence,
                                    initial_goal_value=initial_goal_value, discounting_rate=discounting_rate,
@@ -92,13 +97,46 @@ for cue in df['cues']:
         likeability_chosen_word.append(paths['li_best_word'][0])
         final_goal_value.append(paths['final_goal_value'][0])
         first_word.append(paths['step_1'][0])
+        chosen_words.append((paths['best_word'][0]))
 
     print(nb_steps)
     print(similarity_chosen_word)
     print(likeability_chosen_word)
     print(final_goal_value)
     print(first_word)
+    print(chosen_words)
 
+    # Affichage des mots sélectionnés par le modèle avec leur nombre d'occurrences
+    words = []
+    nb_occurrences = []
+    for word in chosen_words:
+        if word not in words:
+            words.append(word)
+            nb_occurrences.append(chosen_words.count(word))
+    print(f"Mots : {words}")
+    print(f"Nb_occurrences : {nb_occurrences}")
+    df = pd.DataFrame({
+        'mots': words,
+        'nb_occurrences': nb_occurrences
+    })
+    df = df.sort_values(by=['nb_occurrences'])
+
+    fig_chosen_words = plt.figure(figsize=(14, 10))
+    plt.barh(y=df.mots, width=df.nb_occurrences)
+    plt.title("Mots choisis et leur nombre d'occurrences")
+
+    file_name = f"images/test_s_impact_on_a_{cue}_chosen_words.png"
+    print(file_name)
+    plt.savefig(file_name)
+    # plt.show()
+
+    """
+    Affichage des graphes représentant plusieurs variables en fonction du paramètre testé, à savoir :
+    - le nombre d'étapes (nb_steps)
+    - la similarité du mot sélectionné (similarity_chosen_word)
+    - l'agréabilité/likeability du mot sélectionné (likeability_chosen_word)
+    - la valeur finale de la "valeur de but" (final_goal_value)
+    """
     fig = plt.figure(figsize=(10, 6))
     axs = fig.subplots(2, 2)
     fig.suptitle(f'{cue} - Influence de s_impact_on_a sur les sorties du modèle',
