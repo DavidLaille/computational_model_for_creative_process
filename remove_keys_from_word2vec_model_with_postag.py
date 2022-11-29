@@ -2,10 +2,17 @@ import functions_v1 as fct
 import numpy as np
 import get_words2remove as find_words
 
+# Emplacement des modèles word2vec sur Windows et Mac (à modifier si nécessaire)
+location_word2vec_models_windows = "C:/dev/word2vec_pretrained_models/"
+location_word2vec_models_mac = "/Users/david.laille/dev/word2vec_pretrained_models/"
+location_word2vec_models = location_word2vec_models_mac
 
 # Modèles frWac - corpus utilisés : tous les sites en .fr
-pathToModel = "C:/dev/word2vec_pretrained_models/frWac_postag_no_phrase_700_skip_cut50_modified.bin"
-# pathToModel = "C:/dev/word2vec_pretrained_models/frWac_postag_no_phrase_1000_skip_cut100.bin"
+pathToModel = location_word2vec_models + "frWac_postag_no_phrase_700_skip_cut50.bin"
+# pathToModel = location_word2vec_models + "frWac_postag_no_phrase_1000_skip_cut100.bin"
+
+word2vec_model = fct.get_model(pathToModel)
+print("Modèle word2vec chargé avec succès.")
 
 model = fct.get_model(pathToModel)
 

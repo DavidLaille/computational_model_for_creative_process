@@ -2,17 +2,35 @@ import functions_v1 as fct
 import numpy as np
 import get_words2remove as find_words
 
+# Emplacement des modèles word2vec sur Windows et Mac (à modifier si nécessaire)
+location_word2vec_models_windows = "C:/dev/word2vec_pretrained_models/"
+location_word2vec_models_mac = "/Users/david.laille/dev/word2vec_pretrained_models/"
+location_word2vec_models = location_word2vec_models_mac
 
+# # Chemins d'accès sur Windows
+# # Modèles frWac - corpus utilisés : tous les sites en .fr
+# # pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_500_cbow_cut100.bin"
+# # pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_500_skip_cut100.bin"
+# pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_700_skip_cut50.bin"
+#
+# # Modèles frWiki (2015) - corpus utilisés : toutes les pages du Wikipédia français
+# # pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_500_cbow_cut10.bin"
+# # pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_700_cbow_cut100.bin"
+# # pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_1000_skip_cut100.bin"
+# # pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_1000_skip_cut200.bin"
+
+# Chemins d'accès sur Mac
 # Modèles frWac - corpus utilisés : tous les sites en .fr
-# pathToModel = "C:/dev/word2vec_pretrained_models/frWac_no_postag_no_phrase_500_cbow_cut100.bin"
-# pathToModel = "C:/dev/word2vec_pretrained_models/frWac_no_postag_no_phrase_500_skip_cut100.bin"
-pathToModel = "C:/dev/word2vec_pretrained_models/frWac_no_postag_no_phrase_700_skip_cut50.bin"
+# pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_500_cbow_cut100.bin"
+# pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_500_skip_cut100.bin"
+pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_700_skip_cut50.bin"
+
 
 # Modèles frWiki (2015) - corpus utilisés : toutes les pages du Wikipédia français
-# pathToModel = "C:/dev/word2vec_pretrained_models/frWiki_no_phrase_no_postag_500_cbow_cut10.bin"
-# pathToModel = "C:/dev/word2vec_pretrained_models/frWiki_no_phrase_no_postag_700_cbow_cut100.bin"
-# pathToModel = "C:/dev/word2vec_pretrained_models/frWiki_no_phrase_no_postag_1000_skip_cut100.bin"
-# pathToModel = "C:/dev/word2vec_pretrained_models/frWiki_no_phrase_no_postag_1000_skip_cut200.bin"
+# pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_500_cbow_cut10.bin"
+# pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_700_cbow_cut100.bin"
+# pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_1000_skip_cut100.bin"
+# pathToModel = location_word2vec_models + "frWiki_no_phrase_no_postag_1000_skip_cut200.bin"
 
 model = fct.get_model(pathToModel)
 

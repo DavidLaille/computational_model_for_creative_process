@@ -226,19 +226,27 @@ def get_random_adequacy_originality_and_likeability(neighbours, adequacy_influen
 
 
 def compute_adequacy(similarity, s_impact_on_a):
+    mu_A = 0.27
+    const_A = 0.74
     # adequacy = s_impact_on_a * similarity
-    adequacy = 0.27 * similarity + 0.74
+    adequacy = mu_A * similarity + const_A
     return adequacy
 
 
 def compute_originality(similarity, s_impact_on_o):
+    mu_O = -1.25
+    mu_quadr_O = 0.60
+    const_O = 0.79
     # originality = s_impact_on_o * similarity + s_impact_on_o * similarity ** 2
-    originality = -1.25 * similarity + 0.60 * similarity ** 2 + 0.79
+    originality = mu_O * similarity + mu_quadr_O * similarity ** 2 + const_O
     return originality
 
 
 def compute_likeability(adequacy, originality, adequacy_influence):
-    likeability = adequacy_influence * adequacy + (1-adequacy_influence) * originality
+    delta = 1.2
+    # likeability = adequacy_influence * adequacy + (1-adequacy_influence) * originality
+    likeability = (adequacy_influence * (adequacy ** delta)
+                   + (1-adequacy_influence) * (originality ** delta)) ** (1/delta)
     return likeability
 
 
