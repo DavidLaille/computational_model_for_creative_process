@@ -262,8 +262,20 @@ class ComputationalModel:
                     goal_value = fct.discount_goal_value(self.discounting_rate, goal_value)
                     # print("Valeur du but à atteindre après réduction : ", goal_value)
 
-                last_step = num_step
+                # last_step = num_step
                 num_step += 1
+
+            last_likeability_to_cue = fct.get_likeability_to_cue(self.word2vec_model, cue, current_word,
+                                                                 self.s_impact_on_a, self.s_impact_on_o,
+                                                                 self.adequacy_influence)
+
+            neighbours_data_one_path.loc[len(neighbours_data_one_path.axes[0])] = [t + 1, num_step, cue,
+                                                                                   best_word, temporary_best_word,
+                                                                                   q_value, current_word,
+                                                                                   None, None, None, None, None,
+                                                                                   last_likeability_to_cue,
+                                                                                   goal_value]
+            # print(neighbours_data_one_path)
 
             if self.model_type == 2:
                 # à la fin, on choisit le meilleur des mots parmi tous les mots parcourus
@@ -274,44 +286,39 @@ class ComputationalModel:
                 # meilleur mot = celui qui a la plus grande valeur d'agréabilité (likeability) parmi tous les mots parcourus
                 best_word, best_word_likeability = fct.select_best_word_among_all_visited_words(neighbours_data_one_path)
 
+            # on rajoute une ligne dans le dataframe pour prendre en considération les dernières valeurs obtenues
+            self.all_neighbours_data.loc[len(self.all_neighbours_data.axes[0])] = [t + 1, num_step, cue,
+                                                                                   best_word, temporary_best_word,
+                                                                                   q_value, current_word,
+                                                                                   None, None, None, None, None,
+                                                                                   last_likeability_to_cue,
+                                                                                   goal_value]
+
             best_word_similarity = fct.get_similarity_between_words(self.word2vec_model, cue, best_word)
 
-            # on rajoute une ligne dans le dataframe pour prendre en considération les dernières valeurs obtenues
-            self.all_neighbours_data.loc[len(self.all_neighbours_data.axes[0]) + 1] = [t + 1, num_step, cue,
-                                                                                       best_word, temporary_best_word,
-                                                                                       q_value, current_word,
-                                                                                       None, None, None, None, None,
-                                                                                       likeability_to_cue,
-                                                                                       goal_value]
-            neighbours_data_one_path.loc[len(neighbours_data_one_path.axes[0]) + 1] = [t + 1, num_step, cue,
-                                                                                       best_word, temporary_best_word,
-                                                                                       q_value, current_word,
-                                                                                       None, None, None, None, None,
-                                                                                       likeability_to_cue,
-                                                                                       goal_value]
             print("Mots visités : ", visited_words)
-            print("Nombre de steps : ", last_step)
+            print("Nombre de steps : ", num_step)
             # print("Last Goal value : ", goal_value)
             # print("Final Goal value : ", final_goal_value)
             # print("Neighbours data one path : ", neighbours_data_one_path)
             print("Best word : ", best_word)
             print("Best word likeability : ", best_word_likeability)
 
-            row = [num_path + 1, last_step,
+            row = [num_path + 1, num_step,
                    best_word, best_word_similarity, best_word_likeability,
                    goal_value, q_value, cue]
             for i in range(self.nb_max_steps):
-                if i + 1 <= last_step:
+                if i + 1 <= num_step:
                     row.append(visited_words[i + 1][0])
                 else:
                     row.append("NA")
             for j in range(self.nb_max_steps):
-                if j + 1 <= last_step:
+                if j + 1 <= num_step:
                     row.append(visited_words[j + 1][2])
                 else:
                     row.append("NA")
             for k in range(self.nb_max_steps):
-                if k + 1 <= last_step:
+                if k + 1 <= num_step:
                     row.append(visited_words[k + 1][1])
                 else:
                     row.append("NA")

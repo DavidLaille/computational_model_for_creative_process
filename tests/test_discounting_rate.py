@@ -37,7 +37,7 @@ initial_goal_value = 1
 discounting_rates = np.arange(start=0.01, stop=0.90, step=0.01)
 
 memory_size = 7
-vocab_size = 10000
+vocab_size = 15000
 
 nb_neighbours = 5
 nb_max_steps = 100
@@ -46,18 +46,23 @@ method = 3
 alpha = 0.5
 gamma = 0.5
 
-nb_try = 1
+nb_try = 5
 
 ########################################################################################################################
 # Paramètre testé
 discounting_rate = []
+# axe des abscisses étendu pour le traçage des graphes
+discounting_rates_extended_axis = []
 
 # Données qu'on souhaite récupérer
+# Données numériques
 nb_steps = []
-first_word = []
 similarity_chosen_word = []
 likeability_chosen_word = []
 final_goal_value = []
+
+# Données textuelles
+first_words = []
 chosen_words = []
 
 for cue in df['cues']:
@@ -66,21 +71,42 @@ for cue in df['cues']:
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # # si on veut tester un seul mot-indice
-    # word_to_test = "avis"
-    # if cue != word_to_test:
-    #     continue
+    # si on veut tester un seul mot-indice
+    word_to_test = "avis"
+    if cue != word_to_test:
+        continue
+
+    discounting_rates_extended_axis = []
 
     # Pour chaque mot-indice, on réinitialise les listes de données à récupérer
     nb_steps = []
-    first_word = []
     similarity_chosen_word = []
     likeability_chosen_word = []
     final_goal_value = []
+
+    first_words = []
     chosen_words = []
 
-    # Sorties du modèle en fonction de s_impact_on_a
+    nb_steps_means = []
+    similarity_chosen_word_means = []
+    likeability_chosen_word_means = []
+    final_goal_value_means = []
+
+    nb_steps_max_q_value = []
+    similarity_chosen_word_max_q_value = []
+    likeability_chosen_word_max_q_value = []
+    final_goal_value_max_q_value = []
+
+    first_words_max_q_value = []
+    chosen_words_max_q_value = []
+
+    # Sorties du modèle en fonction de discounting_rate
     for discounting_rate in discounting_rates:
+        nb_steps_sum = 0
+        similarity_sum = 0
+        likeability_chosen_word_sum = 0
+        final_goal_value_sum = 0
+
         # Initialisation du modèle computationnel
         model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
                                    s_impact_on_a=s_impact_on_a, s_impact_on_o=s_impact_on_o,
@@ -92,43 +118,110 @@ for cue in df['cues']:
 
         paths, all_neighbours_data = model.launch_model(cue=cue, nb_try=nb_try)
 
-        nb_steps.append(paths['nb_steps'][0])
-        similarity_chosen_word.append(paths['sim_best_word'][0])
-        likeability_chosen_word.append(paths['li_best_word'][0])
-        final_goal_value.append(paths['final_goal_value'][0])
-        first_word.append(paths['step_1'][0])
-        chosen_words.append((paths['best_word'][0]))
+        for t in range(nb_try):
+            nb_steps.append(paths['nb_steps'][t])
+            similarity_chosen_word.append(paths['sim_best_word'][t])
+            likeability_chosen_word.append(paths['li_best_word'][t])
+            final_goal_value.append(paths['final_goal_value'][t])
 
-    print(nb_steps)
-    print(similarity_chosen_word)
-    print(likeability_chosen_word)
-    print(final_goal_value)
-    print(first_word)
-    print(chosen_words)
+            first_words.append(paths['step_1'][t])
+            chosen_words.append((paths['best_word'][t]))
 
-    # Affichage des mots sélectionnés par le modèle avec leur nombre d'occurrences
-    words = []
-    nb_occurrences = []
-    for word in chosen_words:
-        if word not in words:
-            words.append(word)
-            nb_occurrences.append(chosen_words.count(word))
-    print(f"Mots : {words}")
-    print(f"Nb_occurrences : {nb_occurrences}")
-    df = pd.DataFrame({
-        'mots': words,
-        'nb_occurrences': nb_occurrences
+            nb_steps_sum += float(paths['nb_steps'][t])
+            similarity_sum += float(paths['sim_best_word'][t])
+            likeability_chosen_word_sum += float(paths['li_best_word'][t])
+            final_goal_value_sum += float(paths['final_goal_value'][t])
+
+            discounting_rates_extended_axis.append(discounting_rate)
+
+        nb_steps_means.append(nb_steps_sum/nb_try)
+        similarity_chosen_word_means.append(similarity_sum/nb_try)
+        likeability_chosen_word_means.append(likeability_chosen_word_sum/nb_try)
+        final_goal_value_means.append(final_goal_value_sum/nb_try)
+
+        # print(paths)
+        paths_filename = f'dataframes/test_discounting_rate_{cue}_paths_{discounting_rate}.csv'
+        paths.to_csv(paths_filename, index=False, sep=',')
+
+        # print(all_neighbours_data)
+        all_neighbours_data_filename = f'dataframes/test_discounting_rate_{cue}_all_neighbours_data_{discounting_rate}.csv'
+        all_neighbours_data.to_csv(all_neighbours_data_filename, index=False, sep=',')
+
+    print("Nb_steps : ", nb_steps)
+    print("Similarité du mot choisi : ", similarity_chosen_word)
+    print("Agréabilité du mot choisi : ", likeability_chosen_word)
+    print("Goal_value finale : ", final_goal_value)
+
+    print("Nb_steps moyen : ", nb_steps_means)
+    print("Similarité moyenne du mot choisi : ", similarity_chosen_word_means)
+    print("Agréabilité moyenne du mot choisi : ", likeability_chosen_word_means)
+    print("Goal_value finale moyenne : ", final_goal_value_means)
+
+    print("First words : ", first_words)
+    print("Chosen words : ", chosen_words)
+
+    # Calcul du nombre d'occurrences des 1ers mots sélectionnés par le modèle (First)
+    f_words = []
+    f_nb_occurrences = []
+    for word in first_words:
+        if word not in f_words:
+            f_words.append(word)
+            f_nb_occurrences.append(first_words.count(word))
+    print(f"Mots First : {f_words}")
+    print(f"Nb_occurrences mots First : {f_nb_occurrences}")
+    df_first_words = pd.DataFrame({
+        'mots': f_words,
+        'nb_occurrences': f_nb_occurrences
     })
-    df = df.sort_values(by=['nb_occurrences'])
+    df_first_words = df_first_words.sort_values(by=['nb_occurrences'])
 
-    fig_chosen_words = plt.figure(figsize=(14, 10))
-    plt.barh(y=df.mots, width=df.nb_occurrences)
-    plt.title("Mots choisis et leur nombre d'occurrences")
+    # Calcul du nombre d'occurrences des mots sélectionnés par le modèle (Distant)
+    ch_words = []
+    ch_nb_occurrences = []
+    for word in chosen_words:
+        if word not in ch_words:
+            ch_words.append(word)
+            ch_nb_occurrences.append(chosen_words.count(word))
+    print(f"Mots choisis : {ch_words}")
+    print(f"Nb_occurrences mots choisis : {ch_nb_occurrences}")
+    df_chosen_words = pd.DataFrame({
+        'mots': ch_words,
+        'nb_occurrences': ch_nb_occurrences
+    })
+    df_chosen_words = df_chosen_words.sort_values(by=['nb_occurrences'])
 
-    file_name = f"images/test_discounting_rate_{cue}_chosen_words.png"
+    # Affichage des 1ers mots (First) et des meilleurs mots (Distant) sélectionnés par le modèle
+    # avec leur nombre d'occurrences
+    height = len(ch_words)/4
+    width = len(ch_words)/4
+    fig_f_and_ch = plt.figure(figsize=(width, height))
+    (ax1, ax2) = fig_f_and_ch.subplots(1, 2)
+    fig_f_and_ch.suptitle(f"{cue} - Nb d'occurrences des 1ers mots et des meilleurs mots choisis par le modèle",
+                          color='brown', fontsize=14)
+    fig_f_and_ch.tight_layout(h_pad=4, w_pad=7)
+    plt.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.95)
+
+    ax1.barh(y=df_first_words.mots, width=df_first_words.nb_occurrences)
+    ax1.set_title('First words & Nb_occurrences')
+    ax1.set(xlabel='nb_occurrences')
+    ax2.barh(y=df_chosen_words.mots, width=df_chosen_words.nb_occurrences)
+    ax2.set_title('Chosen words & Nb_occurrences')
+    ax2.set(xlabel='nb_occurrences')
+
+    # Sauvegarde des figures obtenues
+    file_name = f"images/test_discounting_rate_{cue}_first_and_chosen_words.png"
     print(file_name)
     plt.savefig(file_name)
     # plt.show()
+
+    # # Affichage des mots sélectionnés par le modèle avec leur nombre d'occurrences
+    # fig_first_words = plt.figure(figsize=(14, 10))
+    # plt.barh(y=df_first_words.mots, width=df_first_words.nb_occurrences)
+    # plt.title("Mots First et leur nombre d'occurrences")
+    #
+    # fig_chosen_words = plt.figure(figsize=(14, 10))
+    # plt.barh(y=df_chosen_words.mots, width=df_chosen_words.nb_occurrences)
+    # plt.title("Mots choisis et leur nombre d'occurrences")
 
     # nb_occurrences = dict()
     # for word in chosen_words:
@@ -145,30 +238,51 @@ for cue in df['cues']:
     - l'agréabilité/likeability du mot sélectionné (likeability_chosen_word)
     - la valeur finale de la "valeur de but" (final_goal_value)
     """
-    fig = plt.figure(figsize=(10, 6))
-    axs = fig.subplots(2, 2)
+    width = 30
+    height = 30
+    fig = plt.figure(figsize=(width, height))
+    axs = fig.subplots(4, 2)
     fig.suptitle(f'{cue} - Influence de discounting_rate sur les sorties du modèle',
                  color='brown', fontsize=14)
     fig.tight_layout(h_pad=4, w_pad=4)
     plt.subplots_adjust(top=0.85, bottom=0.1, left=0.1, right=0.9)
 
-    axs[0, 0].plot(discounting_rates, nb_steps)
+    # Number of steps
+    axs[0, 0].plot(discounting_rates, nb_steps_means, color='blue')
     axs[0, 0].set_title('Nb_steps X discounting_rates')
-    axs[0, 0].set(xlabel='discounting_rate', ylabel='nb_steps')
-    axs[0, 1].plot(discounting_rates, similarity_chosen_word, 'tab:orange')
+    axs[0, 0].set(xlabel='discounting_rate', ylabel='nb_steps_means')
+    axs[1, 0].scatter(discounting_rates_extended_axis, nb_steps, color='blue', marker='+')
+    axs[1, 0].set_title('Nb_steps X discounting_rates')
+    axs[1, 0].set(xlabel='discounting_rates', ylabel='nb_steps')
+
+    # Similarity between the cue and the chosen word
+    axs[0, 1].plot(discounting_rates, similarity_chosen_word_means, color='orange')
     axs[0, 1].set_title('similarity_chosen_word X discounting_rates')
     axs[0, 1].set(xlabel='discounting_rate', ylabel='similarity_chosen_word')
-    axs[1, 0].plot(discounting_rates, likeability_chosen_word, 'tab:green')
-    axs[1, 0].set_title('likeability_chosen_word X discounting_rates')
-    axs[1, 0].set(xlabel='discounting_rate', ylabel='likeability_chosen_word')
-    axs[1, 1].plot(discounting_rates, final_goal_value, 'tab:red')
-    axs[1, 1].set_title('final_goal_value X discounting_rates')
-    axs[1, 1].set(xlabel='discounting_rate', ylabel='final_goal_value')
+    axs[1, 1].scatter(discounting_rates_extended_axis, similarity_chosen_word, color='orange', marker='+')
+    axs[1, 1].set_title('similarity_chosen_word X discounting_rates')
+    axs[1, 1].set(xlabel='discounting_rates', ylabel='similarity_chosen_word')
 
-    file_name = f"images/test_discounting_rate_{cue}.png"
+    # Likeability between the cue and the chosen word
+    axs[2, 0].plot(discounting_rates, likeability_chosen_word_means, color='green')
+    axs[2, 0].set_title('likeability_chosen_word X discounting_rates')
+    axs[2, 0].set(xlabel='discounting_rate', ylabel='likeability_chosen_word_means')
+    axs[3, 0].scatter(discounting_rates_extended_axis, likeability_chosen_word, color='green', marker='+')
+    axs[3, 0].set_title('likeability_chosen_word X discounting_rates')
+    axs[3, 0].set(xlabel='discounting_rates', ylabel='likeability_chosen_word')
+
+    axs[2, 1].plot(discounting_rates, final_goal_value_means, color='red')
+    axs[2, 1].set_title('final_goal_value X discounting_rates')
+    axs[2, 1].set(xlabel='discounting_rate', ylabel='final_goal_value_means')
+    axs[3, 1].scatter(discounting_rates_extended_axis, final_goal_value, color='red', marker='+')
+    axs[3, 1].set_title('final_goal_value X discounting_rates')
+    axs[3, 1].set(xlabel='discounting_rates', ylabel='final_goal_value')
+
+    # Sauvegarde des figures obtenues
+    file_name = f"images/test_discounting_rate_{cue}_graphs.png"
     print(file_name)
-
     plt.savefig(file_name)
-    plt.close(fig_chosen_words)
+
+    plt.close(fig_f_and_ch)
     plt.close(fig)
     # plt.show()
