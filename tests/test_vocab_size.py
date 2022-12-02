@@ -66,6 +66,7 @@ nb_steps = []
 similarity_chosen_word = []
 likeability_chosen_word = []
 final_goal_value = []
+q_values = []
 
 # Données textuelles
 first_words = []
@@ -89,6 +90,7 @@ for cue in df['cues']:
     similarity_chosen_word = []
     likeability_chosen_word = []
     final_goal_value = []
+    q_values = []
 
     first_words = []
     chosen_words = []
@@ -112,6 +114,7 @@ for cue in df['cues']:
         similarity_sum = 0
         likeability_chosen_word_sum = 0
         final_goal_value_sum = 0
+        q_values = []
 
         # Initialisation du modèle computationnel
         model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
@@ -129,6 +132,7 @@ for cue in df['cues']:
             similarity_chosen_word.append(paths['sim_best_word'][t])
             likeability_chosen_word.append(paths['li_best_word'][t])
             final_goal_value.append(paths['final_goal_value'][t])
+            q_values.append(paths['q-value'][t])
 
             first_words.append(paths['step_1'][t])
             chosen_words.append((paths['best_word'][t]))
@@ -138,34 +142,60 @@ for cue in df['cues']:
             likeability_chosen_word_sum += float(paths['li_best_word'][t])
             final_goal_value_sum += float(paths['final_goal_value'][t])
 
-            vocab_sizes_extended_axis.append(discounting_rate)
+            vocab_sizes_extended_axis.append(vocab_size)
 
         nb_steps_means.append(nb_steps_sum/nb_try)
         similarity_chosen_word_means.append(similarity_sum/nb_try)
         likeability_chosen_word_means.append(likeability_chosen_word_sum/nb_try)
         final_goal_value_means.append(final_goal_value_sum/nb_try)
 
+        # Détermination des valeurs correspondant à la plus haute q-value
+        index_best_q_value = np.argmax(q_values)
+
+        nb_steps_max_q_value.append(paths['nb_steps'][index_best_q_value])
+        similarity_chosen_word_max_q_value.append(paths['sim_best_word'][index_best_q_value])
+        likeability_chosen_word_max_q_value.append(paths['li_best_word'][index_best_q_value])
+        final_goal_value_max_q_value.append(paths['final_goal_value'][index_best_q_value])
+
+        first_words_max_q_value.append(paths['step_1'][index_best_q_value])
+        chosen_words_max_q_value.append((paths['best_word'][index_best_q_value]))
+
         # print(paths)
-        paths_filename = f'dataframes/test_vocab_size_{cue}_paths_{discounting_rate}.csv'
+        paths_filename = f'dataframes/test_vocab_size_{cue}_paths_{vocab_size}.csv'
         paths.to_csv(paths_filename, index=False, sep=',')
 
         # print(all_neighbours_data)
-        all_neighbours_data_filename = f'dataframes/test_vocab_size_{cue}_all_neighbours_data_{discounting_rate}.csv'
+        all_neighbours_data_filename = f'dataframes/test_vocab_size_{cue}_all_neighbours_data_{vocab_size}.csv'
         all_neighbours_data.to_csv(all_neighbours_data_filename, index=False, sep=',')
 
+    print("###########################################################################################################")
     print("Nb_steps : ", nb_steps)
     print("Similarité du mot choisi : ", similarity_chosen_word)
     print("Agréabilité du mot choisi : ", likeability_chosen_word)
     print("Goal_value finale : ", final_goal_value)
 
+    print("First words : ", first_words)
+    print("Chosen words : ", chosen_words)
+    print("###########################################################################################################")
+
+    print("###########################################################################################################")
     print("Nb_steps moyen : ", nb_steps_means)
     print("Similarité moyenne du mot choisi : ", similarity_chosen_word_means)
     print("Agréabilité moyenne du mot choisi : ", likeability_chosen_word_means)
     print("Goal_value finale moyenne : ", final_goal_value_means)
+    print("###########################################################################################################")
 
-    print("First words : ", first_words)
-    print("Chosen words : ", chosen_words)
+    print("###########################################################################################################")
+    print("Nb_steps pour les q-values les plus hautes : ", nb_steps_max_q_value)
+    print("Similarité pour les q-values les plus hautes : ", similarity_chosen_word_max_q_value)
+    print("Agréabilité pour les q-values les plus hautes : ", likeability_chosen_word_max_q_value)
+    print("Goal_value finale pour les q-values les plus hautes : ", final_goal_value_max_q_value)
 
+    print("First words pour les q-values les plus hautes : ", first_words_max_q_value)
+    print("Chosen words pour les q-values les plus hautes : ", chosen_words_max_q_value)
+    print("###########################################################################################################")
+
+########################################################################################################################
     # Calcul du nombre d'occurrences des 1ers mots sélectionnés par le modèle (First)
     f_words = []
     f_nb_occurrences = []
@@ -219,26 +249,30 @@ for cue in df['cues']:
     print(file_name)
     plt.savefig(file_name)
     # plt.show()
+########################################################################################################################
 
-    # # Affichage des mots sélectionnés par le modèle avec leur nombre d'occurrences
-    # fig_first_words = plt.figure(figsize=(14, 10))
-    # plt.barh(y=df_first_words.mots, width=df_first_words.nb_occurrences)
-    # plt.title("Mots First et leur nombre d'occurrences")
-    #
-    # fig_chosen_words = plt.figure(figsize=(14, 10))
-    # plt.barh(y=df_chosen_words.mots, width=df_chosen_words.nb_occurrences)
-    # plt.title("Mots choisis et leur nombre d'occurrences")
+########################################################################################################################
+    # Affichage du graphe Likeability VS Nb_steps
+    height = 10
+    width = 10
+    fig_Li_vs_Nb_steps = plt.figure(figsize=(width, height))
+    plt.scatter(nb_steps_means, likeability_chosen_word_means, color='purple', marker='o')
+    plt.title('likeability_chosen_word X nb_steps')
+    plt.xlabel('nb_steps')
+    plt.ylabel('likeability_chosen_word')
 
-    # nb_occurrences = dict()
-    # for word in chosen_words:
-    #     nb_occurrences[word] = chosen_words.count(word)
-    # print(f"Nombre d'occurrences keys : {nb_occurrences.keys()}")
-    # print(f"Nombre d'occurrences values : {nb_occurrences.values()}")
-    # df = pd.DataFrame.from_dict(nb_occurrences, orient='index').rename(columns={0: 'nb_occur'})
-    # print("Dataframe : ", df)
+    # Sauvegarde de la figure obtenue (Likeability_chosen_word VS Nb_steps)
+    file_name = f"images/test_vocab_size_{cue}_Li_vs_Nb_steps.png"
+    print(file_name)
+    plt.savefig(file_name)
+    # plt.show()
+########################################################################################################################
 
+########################################################################################################################
     """
-    Affichage des graphes représentant plusieurs variables en fonction du paramètre testé, à savoir :
+    Graphs
+    Moyennes
+    Affichage/traçage des graphes représentant plusieurs variables en fonction du paramètre testé, à savoir :
     - le nombre d'étapes (nb_steps)
     - la similarité du mot sélectionné (similarity_chosen_word)
     - l'agréabilité/likeability du mot sélectionné (likeability_chosen_word)
@@ -246,11 +280,11 @@ for cue in df['cues']:
     """
     width = 30
     height = 30
-    fig = plt.figure(figsize=(width, height))
-    axs = fig.subplots(4, 2)
-    fig.suptitle(f'{cue} - Influence de vocab_size sur les sorties du modèle',
-                 color='brown', fontsize=14)
-    fig.tight_layout(h_pad=4, w_pad=4)
+    fig_graphs = plt.figure(figsize=(width, height))
+    axs = fig_graphs.subplots(4, 2)
+    fig_graphs.suptitle(f'{cue} - Influence de vocab_size sur les sorties du modèle',
+                        color='brown', fontsize=14)
+    fig_graphs.tight_layout(h_pad=4, w_pad=4)
     plt.subplots_adjust(top=0.85, bottom=0.1, left=0.1, right=0.9)
 
     # Number of steps
@@ -288,7 +322,53 @@ for cue in df['cues']:
     file_name = f"images/test_vocab_size_{cue}_graphs.png"
     print(file_name)
     plt.savefig(file_name)
+########################################################################################################################
+
+########################################################################################################################
+    """
+    Graphs2
+    Max Q-value
+    Affichage/traçage des graphes représentant les variables de sortie en fonction du paramètre testé, à savoir :
+    - le nombre d'étapes (nb_steps)
+    - la similarité du mot sélectionné (similarity_chosen_word)
+    - l'agréabilité/likeability du mot sélectionné (likeability_chosen_word)
+    - la valeur finale de la "valeur de but" (final_goal_value)
+    """
+    width = 30
+    height = 30
+    fig_graphs2 = plt.figure(figsize=(width, height))
+    axs = fig_graphs2.subplots(2, 2)
+    fig_graphs2.suptitle(f'{cue} - Influence de discounting_rate sur les sorties du modèle',
+                         color='brown', fontsize=14)
+    fig_graphs2.tight_layout(h_pad=4, w_pad=4)
+    plt.subplots_adjust(top=0.85, bottom=0.1, left=0.1, right=0.9)
+
+    # Number of steps
+    axs[0, 0].plot(vocab_sizes, nb_steps_max_q_value, color='blue')
+    axs[0, 0].set_title('Nb_steps X discounting_rates')
+    axs[0, 0].set(xlabel='discounting_rate', ylabel='nb_steps_max_q_value')
+
+    # Similarity between the cue and the chosen word
+    axs[0, 1].plot(vocab_sizes, similarity_chosen_word_max_q_value, color='orange')
+    axs[0, 1].set_title('similarity_chosen_word X discounting_rates')
+    axs[0, 1].set(xlabel='discounting_rate', ylabel='similarity_chosen_word_max_q_value')
+
+    # Likeability between the cue and the chosen word
+    axs[1, 0].plot(vocab_sizes, likeability_chosen_word_max_q_value, color='green')
+    axs[1, 0].set_title('likeability_chosen_word X discounting_rates')
+    axs[1, 0].set(xlabel='discounting_rate', ylabel='likeability_chosen_word_max_q_value')
+
+    axs[1, 1].plot(vocab_sizes, final_goal_value_max_q_value, color='red')
+    axs[1, 1].set_title('final_goal_value X discounting_rates')
+    axs[1, 1].set(xlabel='discounting_rate', ylabel='final_goal_value_max_q_value')
+
+    # Sauvegarde des figures obtenues
+    file_name = f"images/test_vocab_size_{cue}_graphs2.png"
+    print(file_name)
+    plt.savefig(file_name)
 
     plt.close(fig_f_and_ch)
-    plt.close(fig)
+    plt.close(fig_Li_vs_Nb_steps)
+    plt.close(fig_graphs)
+    plt.close(fig_graphs2)
     # plt.show()
