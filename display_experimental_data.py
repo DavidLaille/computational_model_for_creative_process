@@ -1,3 +1,6 @@
+import csv
+
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
@@ -50,112 +53,177 @@ for num_participant in range(22, 93):
         print(f"Participant {num_participant} : Problème !")
 
 ########################################################################################################################
-#
-# ########################################################################################################################
-# # Création d'un table de données regroupant les réponses des participants pour chaque mot-indice
-# col_names = ['cues']
-# nb_participants = 70
-# for num_participant in range(22, 93):
-#     col_name_first = "p_" + str(num_participant) + "f"
-#     col_names.append(col_name_first)
-#     col_name_distant = "p_" + str(num_participant) + "d"
-#     col_names.append(col_name_distant)
+
+########################################################################################################################
+# Création d'un table de données regroupant les réponses des participants pour chaque mot-indice
+col_names = ['cues']
+nb_participants = 70
+for num_participant in range(22, 93):
+    col_name_first = "p_" + str(num_participant) + "f"
+    col_names.append(col_name_first)
+    col_name_distant = "p_" + str(num_participant) + "d"
+    col_names.append(col_name_distant)
 # print("Nom des colonnes du dataframe : ", col_names)
 # print("Nombre de colonnes du dataframe : ", len(col_names))
-# responses_by_participant = pd.DataFrame(columns=col_names)
-#
-# cue_index = 0
-# for cue in cues:
-#     row = [cue]
-#     for i, response in enumerate(all_data['id_participant']):
-#         if all_data['cues'][i] == cue:
-#             row.append(response)
-#
-#     print("Ligne à ajouter au dataframe : ", row)
-#     print("Taille de la ligne à ajouter au dataframe : ", len(row))
-#     responses_by_participant.loc[cue_index] = row
-#     cue_index += 1
-# ########################################################################################################################
-#
-# ########################################################################################################################
-# # Création de 2 dictionnaires contenant les réponses pour la condition 1 (First) d'une part
-# # et les réponses pour la condition 2 (Distant) d'autre part
-# cues_and_responses_cond1 = dict()
-# cues_and_responses_cond2 = dict()
-#
-# for cue in cues:
-#     responses_cond1 = []
-#     for index, value in enumerate(all_data_cond1['responses']):
-#         if all_data_cond1['cues'][index] == cue:
-#             responses_cond1.append(value)
-#     cues_and_responses_cond1[cue] = responses_cond1
-#
-#     responses_cond2 = []
-#     for index, value in enumerate(all_data_cond2['responses']):
-#         if all_data_cond2['cues'][index] == cue:
-#             responses_cond2.append(value)
-#     cues_and_responses_cond2[cue] = responses_cond2
-#
-# print("Mots-indices et Réponses pour la condition 1 (First)", cues_and_responses_cond1)
-# print("Mots-indices et Réponses pour la condition 2 (Distant)", cues_and_responses_cond2)
-# ########################################################################################################################
-#
-# ########################################################################################################################
-# for cue in cues:
-#     responses_cond1 = cues_and_responses_cond1[cue]
-#     responses_cond2 = cues_and_responses_cond2[cue]
-#
-#     # Calcul du nombre d'occurrences des 1ers mots donnés par les participants (First)
-#     first_words = []
-#     first_words_nb_occurrences = []
-#     for response in responses_cond1:
-#         if response not in first_words:
-#             first_words.append(response)
-#             first_words_nb_occurrences.append(responses_cond1.count(response))
-#
-#     print(f"Mots First : {first_words}")
-#     print(f"Nb_occurrences mots First : {first_words_nb_occurrences}")
-#     df_first_words = pd.DataFrame({
-#         'mots': first_words,
-#         'nb_occurrences': first_words_nb_occurrences
-#     })
-#     df_first_words = df_first_words.sort_values(by=['nb_occurrences'])
-#
-#     # Calcul du nombre d'occurrences des mots créatifs donnés par les participants (Distant)
-#     distant_words = []
-#     distant_words_nb_occurrences = []
-#     for response in responses_cond2:
-#         if response not in distant_words:
-#             distant_words.append(response)
-#             distant_words_nb_occurrences.append(responses_cond2.count(response))
-#     print(f"Mots First : {distant_words}")
-#     print(f"Nb_occurrences mots First : {distant_words_nb_occurrences}")
-#     df_distant_words = pd.DataFrame({
-#         'mots': distant_words,
-#         'nb_occurrences': distant_words_nb_occurrences
-#     })
-#     df_distant_words = df_distant_words.sort_values(by=['nb_occurrences'])
-#
-#     # Affichage des 1ers mots (First) et des mots créatifs (Distant) donnés par les participants
-#     # avec leur nombre d'occurrences
-#     height = 16
-#     width = 10
-#     fig_f_and_ch = plt.figure(figsize=(width, height))
-#     (ax1, ax2) = fig_f_and_ch.subplots(1, 2)
-#     fig_f_and_ch.suptitle(f"{cue} - Nb d'occurrences des 1ers mots et des mots créatifs choisis par les participants",
-#                           color='brown', fontsize=14)
-#     fig_f_and_ch.tight_layout(h_pad=4, w_pad=7)
-#     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.95)
-#
-#     ax1.barh(y=df_first_words.mots, width=df_first_words.nb_occurrences)
-#     ax1.set_title('First words & Nb_occurrences')
-#     ax1.set(xlabel='nb_occurrences')
-#     ax2.barh(y=df_distant_words.mots, width=df_distant_words.nb_occurrences)
-#     ax2.set_title('Distant words & Nb_occurrences')
-#     ax2.set(xlabel='nb_occurrences')
-#
-#     # Sauvegarde des figures obtenues
-#     file_name = f"data/experimental_data/images/{cue}_first_and_distant_words.png"
-#     print(file_name)
-#     plt.savefig(file_name)
-#     # plt.show()
+responses_by_participant = pd.DataFrame(columns=col_names)
+
+
+cue_index = 0
+previous_num_participant = 22
+num_participant = 0
+num_response = 0
+for cue in cues:
+    row = [cue]
+    for i, response in enumerate(all_data['responses']):
+        num_participant = int(all_data['id_participant'][i])
+        if previous_num_participant != num_participant and num_response < 2:
+            while num_response < 2:
+                row.append('no_data')
+                print(f"Participant {previous_num_participant} : Mot(s)-indice(s) manquant(s)")
+                num_response += 1
+        if previous_num_participant != num_participant and num_response == 2:
+            num_response = 0
+            previous_num_participant = int(all_data['id_participant'][i])
+        if all_data['cues'][i] == cue:
+            if num_response < 2:
+                row.append(response)
+                num_response += 1
+
+    # print("Ligne à ajouter au dataframe : ", row)
+    # print("Taille de la ligne à ajouter au dataframe : ", len(row))
+    responses_by_participant.loc[cue_index] = row
+    cue_index += 1
+
+    # print(responses_by_participant)
+    responses_by_participant_filename = 'data/experimental_data/responses_by_cue.csv'
+    responses_by_participant.to_csv(responses_by_participant_filename, index=False, sep=',')
+
+########################################################################################################################
+
+########################################################################################################################
+# Création de 2 dictionnaires contenant les réponses pour la condition 1 (First) d'une part
+# et les réponses pour la condition 2 (Distant) d'autre part
+# Puis regroupement et sauvegarde des données dans un csv nommé cues_and_responses.csv
+cues_and_responses_cond1 = dict()
+cues_and_responses_cond2 = dict()
+
+for cue in cues:
+    responses_cond1 = []
+    for index, value in enumerate(all_data_cond1['responses']):
+        # print(f"Index : {index} - value : {value}")
+        if all_data_cond1['cues'].iloc[index] == cue:
+            responses_cond1.append(value)
+    cues_and_responses_cond1[cue] = responses_cond1
+
+    responses_cond2 = []
+    for index, value in enumerate(all_data_cond2['responses']):
+        # print(f"Index : {index} - value : {value}")
+        if all_data_cond2['cues'].iloc[index] == cue:
+            responses_cond2.append(value)
+    cues_and_responses_cond2[cue] = responses_cond2
+
+print("Mots-indices et Réponses pour la condition 1 (First)", cues_and_responses_cond1)
+print("Mots-indices et Réponses pour la condition 2 (Distant)", cues_and_responses_cond2)
+
+header = ['cues']
+nb_participants = 70
+for num_participant in range(22, 93):
+    header.append("p_" + str(num_participant))
+with open('data/experimental_data/cues_and_responses.csv', 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(header)
+
+    row_first = []
+    row_distant = []
+    for cue in cues:
+        row_first = cues_and_responses_cond1[cue]
+        row_first.insert(0, cue)
+        row_distant = cues_and_responses_cond2[cue]
+        row_distant.insert(0, cue)
+
+        writer.writerow(row_first)
+        writer.writerow(row_distant)
+
+
+########################################################################################################################
+
+########################################################################################################################
+for cue in cues:
+    responses_cond1 = cues_and_responses_cond1[cue]
+    responses_cond2 = cues_and_responses_cond2[cue]
+
+    # Calcul du nombre d'occurrences des 1ers mots donnés par les participants (First)
+    first_words = []
+    first_words_nb_occurrences = []
+    for response in responses_cond1:
+        if response != response:  # if it's a 'nan'
+            print(f"Réponse : {response} - on ne l'ajoute pas à la liste des réponses")
+        elif response not in first_words:
+            first_words.append(response)
+            first_words_nb_occurrences.append(responses_cond1.count(response))
+
+    print(f"Mots First : {first_words}")
+    print(f"Nb_occurrences mots First : {first_words_nb_occurrences}")
+    df_first_words = pd.DataFrame({
+        'mots': first_words,
+        'nb_occurrences': first_words_nb_occurrences
+    })
+    df_first_words = df_first_words.sort_values(by=['nb_occurrences'])
+
+    # Calcul du nombre d'occurrences des mots créatifs donnés par les participants (Distant)
+    distant_words = []
+    distant_words_nb_occurrences = []
+    for response in responses_cond2:
+        if response != response:  # if it's a 'nan'
+            print(f"Réponse : {response} - on ne l'ajoute pas à la liste des réponses")
+        elif response not in distant_words:
+            distant_words.append(response)
+            distant_words_nb_occurrences.append(responses_cond2.count(response))
+    print(f"Mots Distant : {distant_words}")
+    print(f"Nb_occurrences mots Distant : {distant_words_nb_occurrences}")
+    df_distant_words = pd.DataFrame({
+        'mots': distant_words,
+        'nb_occurrences': distant_words_nb_occurrences
+    })
+    df_distant_words = df_distant_words.sort_values(by=['nb_occurrences'])
+
+    # Affichage des 1ers mots (First) et des mots créatifs (Distant) donnés par les participants
+    # avec leur nombre d'occurrences
+    height = 16
+    width = 10
+    fig_f_and_ch = plt.figure(figsize=(width, height))
+    (ax1, ax2) = fig_f_and_ch.subplots(1, 2)
+    fig_f_and_ch.suptitle(f"{cue} - Nb d'occurrences des 1ers mots et des mots créatifs choisis par les participants",
+                          color='brown', fontsize=14)
+    fig_f_and_ch.tight_layout(h_pad=4, w_pad=7)
+    plt.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.95)
+
+    x1_min = min(first_words_nb_occurrences)
+    x1_max = max(first_words_nb_occurrences)
+    x1_step = 1
+    x2_min = min(distant_words_nb_occurrences)
+    x2_max = max(distant_words_nb_occurrences)
+    x2_step = 1
+    grid1_x_ticks = np.arange(x1_min, x1_max, 1)
+    grid2_x_ticks = np.arange(x2_min, x2_max, 1)
+
+    ax1.set_xticks(grid1_x_ticks, minor=True)
+    ax1.grid(axis='x', which='major', color='grey', linestyle='-', linewidth=0.75, alpha=0.5)
+    ax1.grid(axis='x', which='minor', color='grey', linestyle='--', linewidth=0.5, alpha=0.5)
+    ax1.barh(y=df_first_words.mots, width=df_first_words.nb_occurrences)
+    ax1.set_title('First words & Nb_occurrences')
+    ax1.set(xlabel='nb_occurrences')
+
+    ax2.set_xticks(grid2_x_ticks, minor=True)
+    ax2.grid(axis='x', which='major', color='grey', linestyle='-', linewidth=0.75, alpha=0.5)
+    ax2.grid(axis='x', which='minor', color='grey', linestyle='--', linewidth=0.5, alpha=0.5)
+    ax2.barh(y=df_distant_words.mots, width=df_distant_words.nb_occurrences)
+    ax2.set_title('Distant words & Nb_occurrences')
+    ax2.set(xlabel='nb_occurrences')
+
+    # Sauvegarde des figures obtenues
+    file_name = f"data/experimental_data/images/{cue}_first_and_distant_words.png"
+    print(file_name)
+    plt.savefig(file_name)
+    plt.close(fig_f_and_ch)
+    # plt.show()
