@@ -20,17 +20,25 @@ data_csv_keys = ['cues', 'responses', 'likeability', 'originality', 'adequacy',
                  'unique_creaflexFirst', 'unique_creaflexDist', 'frequency_dictaverf']
 data_csv_values = [[], [], [], [], [], [], [], [], [], [], [], []]
 data_csv = dict(zip(data_csv_keys, data_csv_values))
-print(data_csv)
+# print(data_csv)
 
 
 # un booléen pour vérifier si le header du fichier csv a déjà été écrit
 header_writen = False
 # écriture des cues dans un fichier csv
-with open('data_csv/all_data.csv', 'w', newline='', encoding='utf8') as f:
+with open('../data/experimental_data/all_data.csv', 'w', newline='', encoding='utf8') as f:
     writer = csv.writer(f)
 
     for id_participant in range(22, 93):
-        data_matlab = spio.loadmat(f'data_matlab/A_{id_participant}/CreHack_A_{id_participant}.mat')
+        for key, value in data_csv.items():
+            data_csv[key] = []
+
+        # on ne prendra pas en compte les participants 22, 51, 72 et 75, car leurs données sont problématiques
+        # temps de réponse ultra-courts (2 micro-secondes) ou mots-indices apparaissant + de 2 fois
+        if id_participant == 22 or id_participant == 51 or id_participant == 72 or id_participant == 75:
+            continue
+
+        data_matlab = spio.loadmat(f'../data_matlab/A_{id_participant}/CreHack_A_{id_participant}.mat')
         FGAT = data_matlab["FGAT"]
 
         cues = FGAT["cues"][0][0]

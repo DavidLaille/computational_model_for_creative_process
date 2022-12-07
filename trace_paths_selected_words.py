@@ -12,7 +12,7 @@ for cue in cues['cues']:
     #     break
 
     # si on veut tester un seul mot-indice
-    word_to_test = "avis"
+    word_to_test = "vache"
     if cue != word_to_test:
         continue
 

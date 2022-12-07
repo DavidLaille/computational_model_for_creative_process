@@ -43,9 +43,18 @@ all_responses_cond2 = all_data_cond2['responses'].tolist()
 ########################################################################################################################
 
 ########################################################################################################################
+# On récupère la liste des identifiants de chaque participant
+id_participants = list()
+for id_participant in all_data['id_participant']:
+    if id_participant not in id_participants:
+        id_participants.append(int(id_participant))
+print("Liste des id des participants : ", id_participants)
+########################################################################################################################
+
+########################################################################################################################
 # Test préalable pour vérifier les données expérimentales
-for num_participant in range(22, 93):
-    all_data_participant = all_data[all_data['id_participant'] == num_participant]
+for id_participant in id_participants:
+    all_data_participant = all_data[all_data['id_participant'] == id_participant]
     cues_participant = all_data_participant['cues'].tolist()
     unique_cues_participant = list()
     nb_occurrences_cues_participant = list()
@@ -57,15 +66,14 @@ for num_participant in range(22, 93):
             # print("Nb_occurrences : ", cues_participant.count(cue))
 
     if 1 in nb_occurrences_cues_participant or 3 in nb_occurrences_cues_participant:
-        print(f"Participant {num_participant} : Problème !")
+        print(f"Participant {id_participant} : Problème !")
 
 ########################################################################################################################
 
 ########################################################################################################################
 # Création d'un table de données regroupant les réponses des participants pour chaque mot-indice
 col_names = ['cues']
-nb_participants = 70
-for num_participant in range(22, 93):
+for num_participant in id_participants:
     col_name_first = "p_" + str(num_participant) + "f"
     col_names.append(col_name_first)
     col_name_distant = "p_" + str(num_participant) + "d"
@@ -76,7 +84,7 @@ responses_by_participant = pd.DataFrame(columns=col_names)
 
 
 cue_index = 0
-previous_num_participant = 22
+previous_num_participant = id_participants[0]
 num_participant = 0
 num_response = 0
 for cue in cues:
@@ -135,8 +143,7 @@ print("Mots-indices et Réponses pour la condition 2 (Distant)", cues_and_respon
 print("###############################################################################################################")
 
 header = ['cues']
-nb_participants = 70
-for num_participant in range(22, 93):
+for num_participant in id_participants:
     header.append("p_" + str(num_participant))
 with open('data/experimental_data/responses_by_cue_2_lines.csv', 'w') as f:
     writer = csv.writer(f)
@@ -162,7 +169,7 @@ with open('data/experimental_data/responses_by_cue_2_lines.csv', 'w') as f:
 
 # Initialisation des fichiers csv et création des headers
 header = ['cues']
-nb_max_response = 70
+nb_max_response = len(id_participants)
 for i in range(nb_max_response):
     header.append("r_" + str(i+1))
 

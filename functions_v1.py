@@ -157,13 +157,13 @@ def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, metho
     # méthode 3 : identique à la méthode 1 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 3:
-        nb_options = nb_neighbours * 10
+        nb_options = nb_neighbours * 5
         most_similar_words = model.most_similar(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
     # méthode 4 : identique à la méthode 2 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 4:
-        nb_options = nb_neighbours * 10
+        nb_options = nb_neighbours * 5
         most_similar_words = model.most_similar_cosmul(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
 
@@ -219,10 +219,10 @@ def get_random_adequacy_originality_and_likeability(neighbours, adequacy_influen
 
 
 def compute_adequacy(similarity):
-    muA_3 = 1.2  # coeff multiplicateur de sim^3
-    muA_2 = -1.8  # coeff multiplicateur de sim^2
-    muA_1 = 1  # coeff multiplicateur de sim^1
-    muA_0 = 0.7  # coeff multiplicateur de sim^0
+    muA_3 = 1.2     # coefficient multiplicateur de sim^3
+    muA_2 = -1.8    # coefficient multiplicateur de sim^2
+    muA_1 = 1       # coefficient multiplicateur de sim^1
+    muA_0 = 0.7     # coefficient multiplicateur de sim^0
     adequacy = muA_3 * similarity ** 3 + muA_2 * similarity ** 2 + muA_1 * similarity + muA_0
     adequacy = adequacy + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
 
@@ -235,10 +235,10 @@ def compute_adequacy(similarity):
 
 
 def compute_originality(similarity):
-    muO_3 = -0.5  # coeff multiplicateur de sim^3
-    muO_2 = 1  # coeff multiplicateur de sim^2
-    muO_1 = -1.3  # coeff multiplicateur de sim^1
-    muO_0 = 0.8  # coeff multiplicateur de sim^0
+    muO_3 = -0.5    # coefficient multiplicateur de sim^3
+    muO_2 = 1       # coefficient multiplicateur de sim^2
+    muO_1 = -1.3    # coefficient multiplicateur de sim^1
+    muO_0 = 0.8     # coefficient multiplicateur de sim^0
     originality = muO_3 * similarity ** 3 + muO_2 * similarity ** 2 + muO_1 * similarity + muO_0
     originality = originality + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
 
@@ -278,20 +278,26 @@ def get_likeability_to_cue(word2vec_model, cue, word, adequacy_influence):
 
 
 def update_q_value(current_word_likeability, current_q_value, goal_value, neighbours_data, alpha, gamma):
-    # détermination de la récompense
-    # à remplacer par une fonction compute_reward() à l'avenir
-    if current_word_likeability > goal_value:
-        r = 1
-    else:
-        r = 0
+    # calcul de la valeur maximale de la likeability
+    next_word_likeability = max(neighbours_data['likeability'])
 
-    li_max = max(neighbours_data['likeability'])
+    # détermination de la récompense
+    reward = compute_reward(current_word_likeability, next_word_likeability)
 
     # calcul de la q-value
-    new_q_value = current_q_value + alpha * (r + gamma * (li_max - goal_value))
-    # new_value = (current_word_likeability - goal_value) + alpha * (r + gamma * max(neighbours_data['likeability'] - goal_value))
+    new_q_value = current_q_value + alpha * (reward + gamma * (next_word_likeability - goal_value))
 
     return new_q_value
+
+
+def compute_reward(current_word_likeability, next_word_likeability):
+    reward = 0
+    if current_word_likeability < next_word_likeability:
+        reward = 1
+    elif current_word_likeability > next_word_likeability:
+        reward = -1
+
+    return reward
 
 
 def select_next_word(neighbours_data):

@@ -13,7 +13,13 @@ Infos du modèle word2vec pré-entraîné
     skip            : la méthode utilisée est la méthode skip-gram
     cut50           : seuls les mots qui apparaissaient 50 fois ou plus dans le corpus ont été conservés
 """
-pathToModel = "C:/dev/word2vec_pretrained_models/frWac_no_postag_no_phrase_700_skip_cut50.bin"
+# Emplacement des modèles word2vec sur Windows et Mac (à modifier si nécessaire)
+location_word2vec_models_windows = "C:/dev/word2vec_pretrained_models/"
+location_word2vec_models_mac = "/Users/david.laille/dev/word2vec_pretrained_models/"
+location_word2vec_models = location_word2vec_models_mac
+
+pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_700_skip_cut50_modified.bin"
+
 word2vec_model = fct.get_model(pathToModel)
 print("Modèle word2vec chargé avec succès.")
 

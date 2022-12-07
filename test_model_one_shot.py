@@ -13,7 +13,7 @@ Infos du modèle word2vec pré-entraîné
     cut50           : seuls les mots qui apparaissaient 50 fois ou plus dans le corpus ont été conservés
 """
 
-# chargement des mots-indices depuis le fichier csv
+# Chargement des mots-indices depuis le fichier csv
 df = pd.read_csv('data/experimental_data/cues.csv', sep=',')
 print("Fichier cues.csv chargé avec succès.")
 
@@ -33,7 +33,7 @@ model_type = 2
 adequacy_influence = 0.65
 
 initial_goal_value = 1
-discounting_rate = 0.03  # (1%)
+discounting_rate = 0.05  # (1%)
 
 memory_size = 3
 vocab_size = 3000
@@ -55,9 +55,9 @@ for cue in df['cues']:
     #     break
 
     # # si on veut tester un seul mot-indice
-    word_to_test = "avis"
-    if cue != word_to_test:
-        continue
+    # word_to_test = "avis"
+    # if cue != word_to_test:
+    #     continue
 
     # # Initialisation de la goal_value
     # # La goal_value initiale aura la valeur d'agréabilité la plus haute + un petit qqch (3%, 5% ou 10% par ex.)

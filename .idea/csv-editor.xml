@@ -10,6 +10,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/experimental_data/all_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/experimental_data/all_data_with_sim_from_word2vec.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/experimental_data/cues.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/experimental_data/nb_occurrences_by_response_distant.csv">
           <value>
             <Attribute>
@@ -25,6 +46,13 @@
           </value>
         </entry>
         <entry key="/data/experimental_data/responses_by_cue.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/experimental_data/responses_by_cue_2_lines.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
