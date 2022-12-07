@@ -39,7 +39,6 @@ for cue in cues['cues']:
         # on initialise une liste de mots visités, le mot choisi et les valeurs d'agréabilité
         met_words = []
         met_words_labels = dict()
-        met_words_labels[cue] = cue
         likeabilities = [0]
 
         weights = []
@@ -61,6 +60,7 @@ for cue in cues['cues']:
                     weights.append(df['similarity'][id])
 
         print("Mots rencontrés : ", met_words)
+        print("Labels des mots rencontrés : ", met_words_labels)
         nodes = met_words
 
         for num_word, word in enumerate(met_words):
@@ -70,8 +70,8 @@ for cue in cues['cues']:
         print("Poids des liens entre les mots : ", weights)
 
         # si on veut fixer la position des mots rencontrés
-        x_figsize = 140
-        y_figsize = 80
+        x_figsize = nb_steps * 2
+        y_figsize = nb_steps
         x_space_between_words = x_figsize/(len(met_words)+1)
         x_offset = x_figsize/(2*(len(met_words)+1))
         y_center = y_figsize/2
@@ -93,18 +93,26 @@ for cue in cues['cues']:
         print("Position des mots rencontrés : ", position_met_words)
 
         for node in nodes:
+            node_without_tag = node
+            while '_' in node_without_tag:
+                node_without_tag = node_without_tag[:-1]
             # si c'est le mot-indice, on le colore en vert-pomme
-            if node == paths['cue'][index]:
+            if node == met_words[0]:
                 nodes_size.append(4000)
                 nodes_color.append("#c4ff00")
             # si c'est le mot choisi, on le colore en orange-rouge
-            elif node == best_word:
+            elif best_word == node_without_tag:
                 nodes_size.append(5000)
                 nodes_color.append("#ff4000")
             # si le mot fait partie des mots parcourus, on le colore en orange-pale
             elif node in met_words:
                 nodes_size.append(3000)
                 nodes_color.append("#ff7728")
+            # si c'est un mot du réseau sémantique quelconque, on le colore en gris
+            # et on le rend un peu transparent
+            else:
+                nodes_size.append(1500)
+                nodes_color.append("#8f8f8f")
 
         # print("Taille des noeuds : ", nodes_size)
         # print("Couleur des noeuds : ", nodes_color)

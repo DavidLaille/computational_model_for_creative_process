@@ -33,15 +33,13 @@ model_type = 2
 
 ########################################################################################################################
 # Initialisation des paramètres du modèle computationnel
-s_impact_on_a = 0.5
-s_impact_on_o = 0.5
-adequacy_influence = 0.5
+adequacy_influence = 0.65
 
 initial_goal_value = 1
 discounting_rate = 0.05
 
 memory_size = 7
-vocab_size = 10000
+vocab_size = 5000
 
 nb_neighbours = 5
 nb_max_steps = 100
@@ -116,7 +114,6 @@ for cue in df['cues']:
 
         # Initialisation du modèle computationnel
         model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
-                                   s_impact_on_a=s_impact_on_a, s_impact_on_o=s_impact_on_o,
                                    adequacy_influence=adequacy_influence,
                                    initial_goal_value=initial_goal_value, discounting_rate=discounting_rate,
                                    memory_size=memory_size, vocab_size=vocab_size,

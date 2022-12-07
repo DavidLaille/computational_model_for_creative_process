@@ -44,15 +44,13 @@ get_neighbours_and_similarities(string, gensim.models.KeyedVectors, int, int, in
                                                  mot-indice considéré
 
 ########################################################################################################################
-get_adequacy_originality_and_likeability(neighbours, similarities, s_impact_on_a, s_impact_on_o, adequacy_influence)
+get_adequacy_originality_and_likeability(neighbours, similarities, adequacy_influence)
    return adequacies, originalities, likeabilities
 
 get_adequacy_originality_and_likeability(list(), list(), float, float, float) => list(), list(), list()
        paramètres d'entrée     : neighbours -> la liste des mots voisins à considérer
                                  similarities -> la liste des similarités (fréquences d'association) entre chaque
                                                  mot voisin et le mot-indice
-                                 s_impact_on_a -> proportionnalité entre adéquation et freq. d'association (similarité)
-                                 s_impact_on_o -> proportionnalité entre originalité et freq. d'association (similarité)
                                  adequacy_influence -> la part d'influence de la valeur d'adéquation dans le calcul
                                                        de l'agréabilité (likeability)
                                                        pour obtenir la part d'originalité : 1 - adequacy_influence
@@ -124,6 +122,7 @@ discount_goal_value(float, float) => float
 def get_model(path_to_model):
     # chargement du modèle
     model = KeyedVectors.load_word2vec_format(path_to_model, binary=True, unicode_errors="ignore")
+
     return model
 
 
@@ -132,19 +131,18 @@ def create_dico(model):
     complete_dico = []
     for index, word in enumerate(model.index_to_key):
         complete_dico.append(word)
+
     return complete_dico
 
 
-def get_max_likeability(word2vec_model, cue, s_impact_on_a, s_impact_on_o, adequacy_influence, vocab_size):
+def get_max_likeability(word2vec_model, cue, adequacy_influence, vocab_size):
     likeabilities = []
     neighbours = word2vec_model.similar_by_key(key=cue, topn=100, restrict_vocab=vocab_size)
     for neighbour in neighbours:
-        likeability = get_likeability_to_cue(word2vec_model, cue, neighbour[0],
-                                             s_impact_on_a, s_impact_on_o, adequacy_influence)
-        # print(f"Cue - Neighbour - Similarity - Likeability : {cue} - {neighbour[0]} - {neighbour[1]} - {likeability}")
+        likeability = get_likeability_to_cue(word2vec_model, cue, neighbour[0], adequacy_influence)
         likeabilities.append(likeability)
-    # print(likeabilities)
     max_likeability = max(likeabilities)
+
     return max_likeability
 
 
@@ -159,14 +157,14 @@ def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, metho
     # méthode 3 : identique à la méthode 1 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 3:
-        pool_size = nb_neighbours * 3
-        most_similar_words = model.most_similar(cue, topn=pool_size, restrict_vocab=vocab_size)
+        nb_options = nb_neighbours * 10
+        most_similar_words = model.most_similar(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
     # méthode 4 : identique à la méthode 2 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 4:
-        pool_size = nb_neighbours * 3
-        most_similar_words = model.most_similar_cosmul(cue, topn=pool_size, restrict_vocab=vocab_size)
+        nb_options = nb_neighbours * 10
+        most_similar_words = model.most_similar_cosmul(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
 
     neighbours = []
@@ -174,31 +172,26 @@ def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, metho
     for word in most_similar_words:
         neighbours.append(word[0])
         similarities.append(word[1])
+
     return neighbours, similarities
 
 
-def get_adequacy_originality_and_likeability(neighbours, similarities, s_impact_on_a, s_impact_on_o, adequacy_influence):
+def get_adequacy_originality_and_likeability(neighbours, similarities, adequacy_influence):
     adequacies = []
     originalities = []
     likeabilities = []
 
-    delta = 1  # valeur arbitraire
-
     for i in range(len(neighbours)):
         # calcul de l'adéquation de chaque mot voisin
-        adequacy = compute_adequacy(similarities[i], s_impact_on_a)
-        # adequacy = coeff_A * np.log10(similarities[i])
+        adequacy = compute_adequacy(similarities[i])
         adequacies.append(adequacy)
 
         # calcul de l'originalité de chaque mot voisin
-        originality = compute_originality(similarities[i], s_impact_on_o)
-        # originality = coeff_O * np.log10(similarities[i]) + coeff_O * (np.log10(similarities[i])**2)
+        originality = compute_originality(similarities[i])
         originalities.append(originality)
 
         # calcul de l'agréabilité de chaque mot voisin
         likeability = compute_likeability(adequacy, originality, adequacy_influence)
-        # likeability = (adequacy_influence * (adequacy ** delta)
-        #               + (1-adequacy_influence) * (originality ** delta)) ** (1/delta)
         likeabilities.append(likeability)
 
     return adequacies, originalities, likeabilities
@@ -225,45 +218,62 @@ def get_random_adequacy_originality_and_likeability(neighbours, adequacy_influen
     return adequacies, originalities, likeabilities
 
 
-def compute_adequacy(similarity, s_impact_on_a):
-    mu_A = 0.27
-    const_A = 0.74
-    # adequacy = s_impact_on_a * similarity
-    adequacy = mu_A * similarity + const_A
+def compute_adequacy(similarity):
+    muA_3 = 1.2  # coeff multiplicateur de sim^3
+    muA_2 = -1.8  # coeff multiplicateur de sim^2
+    muA_1 = 1  # coeff multiplicateur de sim^1
+    muA_0 = 0.7  # coeff multiplicateur de sim^0
+    adequacy = muA_3 * similarity ** 3 + muA_2 * similarity ** 2 + muA_1 * similarity + muA_0
+    adequacy = adequacy + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
+
+    if adequacy < 0:
+        adequacy = 0
+    elif adequacy > 1:
+        adequacy = 1
+
     return adequacy
 
 
-def compute_originality(similarity, s_impact_on_o):
-    mu_O = -1.25
-    mu_quadr_O = 0.60
-    const_O = 0.79
-    # originality = s_impact_on_o * similarity + s_impact_on_o * similarity ** 2
-    originality = mu_O * similarity + mu_quadr_O * similarity ** 2 + const_O
+def compute_originality(similarity):
+    muO_3 = -0.5  # coeff multiplicateur de sim^3
+    muO_2 = 1  # coeff multiplicateur de sim^2
+    muO_1 = -1.3  # coeff multiplicateur de sim^1
+    muO_0 = 0.8  # coeff multiplicateur de sim^0
+    originality = muO_3 * similarity ** 3 + muO_2 * similarity ** 2 + muO_1 * similarity + muO_0
+    originality = originality + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
+
+    if originality < 0:
+        originality = 0
+    elif originality > 1:
+        originality = 1
+
     return originality
 
 
 def compute_likeability(adequacy, originality, adequacy_influence):
-    delta = 1.2
-    # likeability = adequacy_influence * adequacy + (1-adequacy_influence) * originality
+    delta = 0.8
     likeability = (adequacy_influence * (adequacy ** delta)
                    + (1-adequacy_influence) * (originality ** delta)) ** (1/delta)
+
     return likeability
 
 
 def get_similarity_between_words(word2vec_model, word1, word2):
     similarity = word2vec_model.similarity(word1, word2)
+
     return similarity
 
 
-def get_likeability_to_cue(word2vec_model, cue, word, s_impact_on_a, s_impact_on_o, adequacy_influence):
+def get_likeability_to_cue(word2vec_model, cue, word, adequacy_influence):
     likeability_to_cue = 0
     if cue == word:
         likeability_to_cue = 0
     else:
         similarity = get_similarity_between_words(word2vec_model, cue, word)
-        adequacy_to_cue = compute_adequacy(similarity, s_impact_on_a)
-        originality_to_cue = compute_originality(similarity, s_impact_on_o)
+        adequacy_to_cue = compute_adequacy(similarity)
+        originality_to_cue = compute_originality(similarity)
         likeability_to_cue = compute_likeability(adequacy_to_cue, originality_to_cue, adequacy_influence)
+
     return likeability_to_cue
 
 
@@ -280,6 +290,7 @@ def update_q_value(current_word_likeability, current_q_value, goal_value, neighb
     # calcul de la q-value
     new_q_value = current_q_value + alpha * (r + gamma * (li_max - goal_value))
     # new_value = (current_word_likeability - goal_value) + alpha * (r + gamma * max(neighbours_data['likeability'] - goal_value))
+
     return new_q_value
 
 
@@ -288,6 +299,7 @@ def select_next_word(neighbours_data):
     next_word = neighbours_data['neighbours'][index_max_value]
     next_word_likeability = neighbours_data['likeability'][index_max_value]
     next_word_similarity = neighbours_data['similarity'][index_max_value]
+
     return next_word, next_word_likeability, next_word_similarity
 
 
@@ -297,14 +309,7 @@ def select_best_word(word1, word1_likeability, word2, word2_likeability):
     if word1_likeability < word2_likeability:
         selected_word = word2
         selected_word_likeability = word2_likeability
-    # elif word1_likeability > word2_likeability:
-    #     selected_word = word1
-    #     selected_word_likeability = word1_likeability
-    # else:
-    #     if word1 == word2:
-    #         print("Les mots sont identiques, on garde le premier")
-    #     else:
-    #         print("Les mots sont équivalents, on garde le premier")
+
     return selected_word, selected_word_likeability
 
 
@@ -316,17 +321,20 @@ def select_best_word_among_all_visited_words(neighbours_data_one_path):
         best_word = best_word[:-1]
         # print("best word après : ", best_word)
     best_word_likeability = neighbours_data_one_path['likeability_to_cue'][index_max_value]
+
     return best_word, best_word_likeability
 
 
 def discount_goal_value_linear(decrease_amount, goal_value):
     new_goal_value = goal_value - decrease_amount
+
     return new_goal_value
 
 
 def discount_goal_value(discounting_rate, goal_value):
     # cette fonction est une exponentielle de base a avec : a = 1 - discounting_rate
     new_goal_value = (1 - discounting_rate) * goal_value
+
     return new_goal_value
 
 
@@ -342,6 +350,7 @@ def discount_goal_value_exp(discounting_rate, goal_value):
     # new_goal_value = (-1) * math.exp((-8) * goal_value) + 1
     # new_goal_value = (-1) * math.exp((-9) * goal_value) + 1
     # new_goal_value = (-1) * math.exp((-10) * goal_value) + 1
+
     return new_goal_value
 
 
@@ -357,6 +366,7 @@ def discount_goal_value_log(discounting_rate, goal_value):
     # new_goal_value = (math.log(goal_value)/8) + 1
     # new_goal_value = (math.log(goal_value)/9) + 1
     # new_goal_value = (math.log(goal_value)/10) + 1
+
     return new_goal_value
 
 
@@ -367,4 +377,5 @@ def discount_goal_value_sqrt(goal_value):
         # on décrémente un peu la goal_value car sqrt(1) = 1 (on ne bougera pas si on applique le calcul)
     else:
         new_goal_value = math.sqrt(goal_value)
+
     return new_goal_value

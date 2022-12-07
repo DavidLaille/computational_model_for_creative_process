@@ -34,8 +34,6 @@ Paramètres du modèle
                                   model_type = 2 : "vue globale sans mémoire"
                                   model_type = 3 : "vue globale avec mémoire" 
     Paramètres de mapping
-        s_impact_on_a           : représente la proportionnalité entre adéquation et fréquence d'association (similarité)
-        s_impact_on_o           : représente la proportionnalité entre originalité et fréquence d'association (similarité)
         adequacy_influence      : représente l'influence de l'adéquation dans le calcul d'agréabilité
                                   l'influence de l'originalité est obtenue en faisant : 1 - adequacy_influence
 
@@ -69,7 +67,7 @@ Paramètres du modèle
 
 class ComputationalModel:
     def __init__(self, word2vec_model, model_type=2,
-                 s_impact_on_a=0.5, s_impact_on_o=0.5, adequacy_influence=0.5,
+                 adequacy_influence=0.5,
                  initial_goal_value=1, discounting_rate=0.07,
                  memory_size=7, vocab_size=10000,
                  nb_neighbours=5, nb_max_steps=100, method=3,
@@ -78,8 +76,6 @@ class ComputationalModel:
         self.word2vec_model = word2vec_model
         self.model_type = model_type
 
-        self.s_impact_on_a = s_impact_on_a
-        self.s_impact_on_o = s_impact_on_o
         self.adequacy_influence = adequacy_influence
 
         self.initial_goal_value = initial_goal_value
@@ -149,12 +145,10 @@ class ComputationalModel:
             # initialisation des variables
             likeability_to_cue = 0
             goal_value = self.initial_goal_value
-            final_goal_value = 0
             current_word = cue
             current_word_likeability = 0
             current_word_similarity = 0
             num_step = 0
-            last_step = 0
             q_value = 0
             # une variable pour représenter le mot final choisi par le modèle
             best_word = current_word
@@ -174,9 +168,8 @@ class ComputationalModel:
                 neighbours, similarities = fct.get_neighbours_and_similarities(
                     words_in_memory, self.word2vec_model, self.nb_neighbours, self.vocab_size, self.method)
                 adequacies, originalities, likeabilities = fct.get_adequacy_originality_and_likeability(
-                    neighbours, similarities, self.s_impact_on_a, self.s_impact_on_o, self.adequacy_influence)
+                    neighbours, similarities, self.adequacy_influence)
                 likeability_to_cue = fct.get_likeability_to_cue(self.word2vec_model, cue, current_word,
-                                                                self.s_impact_on_a, self.s_impact_on_o,
                                                                 self.adequacy_influence)
 
                 # on remplit le dataframe avec les données obtenues
@@ -262,11 +255,9 @@ class ComputationalModel:
                     goal_value = fct.discount_goal_value(self.discounting_rate, goal_value)
                     # print("Valeur du but à atteindre après réduction : ", goal_value)
 
-                # last_step = num_step
                 num_step += 1
 
             last_likeability_to_cue = fct.get_likeability_to_cue(self.word2vec_model, cue, current_word,
-                                                                 self.s_impact_on_a, self.s_impact_on_o,
                                                                  self.adequacy_influence)
 
             neighbours_data_one_path.loc[len(neighbours_data_one_path.axes[0])] = [t + 1, num_step, cue,
@@ -303,6 +294,8 @@ class ComputationalModel:
             # print("Neighbours data one path : ", neighbours_data_one_path)
             print("Best word : ", best_word)
             print("Best word likeability : ", best_word_likeability)
+
+            print("Final q-value : ", q_value)
 
             row = [num_path + 1, num_step,
                    best_word, best_word_similarity, best_word_likeability,
