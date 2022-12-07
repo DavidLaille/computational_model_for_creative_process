@@ -73,10 +73,10 @@ for id_participant in id_participants:
 ########################################################################################################################
 # Création d'un table de données regroupant les réponses des participants pour chaque mot-indice
 col_names = ['cues']
-for num_participant in id_participants:
-    col_name_first = "p_" + str(num_participant) + "f"
+for id_participant in id_participants:
+    col_name_first = "p_" + str(id_participant) + "f"
     col_names.append(col_name_first)
-    col_name_distant = "p_" + str(num_participant) + "d"
+    col_name_distant = "p_" + str(id_participant) + "d"
     col_names.append(col_name_distant)
 # print("Nom des colonnes du dataframe : ", col_names)
 # print("Nombre de colonnes du dataframe : ", len(col_names))
@@ -84,21 +84,21 @@ responses_by_participant = pd.DataFrame(columns=col_names)
 
 
 cue_index = 0
-previous_num_participant = id_participants[0]
-num_participant = 0
+previous_id_participant = id_participants[0]
+id_participant = 0
 num_response = 0
 for cue in cues:
     row = [cue]
     for i, response in enumerate(all_data['responses']):
-        num_participant = int(all_data['id_participant'][i])
-        if previous_num_participant != num_participant and num_response < 2:
+        id_participant = int(all_data['id_participant'][i])
+        if previous_id_participant != id_participant and num_response < 2:
             while num_response < 2:
                 row.append('no_data')
-                # print(f"Participant {previous_num_participant} : Mot(s)-indice(s) manquant(s)")
+                # print(f"Participant {previous_id_participant} : Mot(s)-indice(s) manquant(s)")
                 num_response += 1
-        if previous_num_participant != num_participant and num_response == 2:
+        if previous_id_participant != id_participant and num_response == 2:
             num_response = 0
-            previous_num_participant = int(all_data['id_participant'][i])
+            previous_id_participant = int(all_data['id_participant'][i])
         if all_data['cues'][i] == cue:
             if num_response < 2:
                 row.append(response)
@@ -118,7 +118,7 @@ for cue in cues:
 ########################################################################################################################
 # Création de 2 dictionnaires contenant les réponses pour la condition 1 (First) d'une part
 # et les réponses pour la condition 2 (Distant) d'autre part
-# Puis regroupement et sauvegarde des données dans un csv nommé cues_and_responses.csv
+# Puis regroupement et sauvegarde des données dans un csv nommé responses_by_cue_2_lines.csv
 cues_and_responses_cond1 = dict()
 cues_and_responses_cond2 = dict()
 
@@ -143,8 +143,8 @@ print("Mots-indices et Réponses pour la condition 2 (Distant)", cues_and_respon
 print("###############################################################################################################")
 
 header = ['cues']
-for num_participant in id_participants:
-    header.append("p_" + str(num_participant))
+for id_participant in id_participants:
+    header.append("p_" + str(id_participant))
 with open('data/experimental_data/responses_by_cue_2_lines.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerow(header)
@@ -255,14 +255,14 @@ for cue in cues:
     ax1.set_xticks(grid1_x_ticks, minor=True)
     ax1.grid(axis='x', which='major', color='grey', linestyle='-', linewidth=0.75, alpha=0.5)
     ax1.grid(axis='x', which='minor', color='grey', linestyle='--', linewidth=0.5, alpha=0.5)
-    ax1.barh(y=df_first_words.mots, width=df_first_words.nb_occurrences)
+    ax1.barh(y=df_first_words.mots[::-1], width=df_first_words.nb_occurrences[::-1])
     ax1.set_title('First words & Nb_occurrences')
     ax1.set(xlabel='nb_occurrences')
 
     ax2.set_xticks(grid2_x_ticks, minor=True)
     ax2.grid(axis='x', which='major', color='grey', linestyle='-', linewidth=0.75, alpha=0.5)
     ax2.grid(axis='x', which='minor', color='grey', linestyle='--', linewidth=0.5, alpha=0.5)
-    ax2.barh(y=df_distant_words.mots, width=df_distant_words.nb_occurrences)
+    ax2.barh(y=df_distant_words.mots[::-1], width=df_distant_words.nb_occurrences[::-1])
     ax2.set_title('Distant words & Nb_occurrences')
     ax2.set(xlabel='nb_occurrences')
 
