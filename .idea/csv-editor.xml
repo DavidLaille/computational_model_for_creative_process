@@ -927,6 +927,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/generated_data/nb_occurrences_by_response_distant.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/generated_data/nb_occurrences_by_response_first.csv">
           <value>
             <Attribute>
