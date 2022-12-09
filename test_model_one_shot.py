@@ -191,7 +191,7 @@ for cue in cues:
     width = 10
     fig_f_and_ch = plt.figure(figsize=(width, height))
     (ax1, ax2) = fig_f_and_ch.subplots(1, 2)
-    fig_f_and_ch.suptitle(f"{cue} - Nb d'occurrences des 1ers mots et des mots créatifs choisis par les participants",
+    fig_f_and_ch.suptitle(f"{cue} - Nb d'occurrences des 1ers mots et des mots créatifs générés par le modèle",
                           color='brown', fontsize=14)
     fig_f_and_ch.tight_layout(h_pad=4, w_pad=7)
     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.95)

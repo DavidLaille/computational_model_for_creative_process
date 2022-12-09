@@ -251,7 +251,9 @@ def compute_originality(similarity):
 
 
 def compute_likeability(adequacy, originality, adequacy_influence):
-    delta = 0.8
+    delta = 0.62
+    delta = delta + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
+
     likeability = (adequacy_influence * (adequacy ** delta)
                    + (1-adequacy_influence) * (originality ** delta)) ** (1/delta)
 
