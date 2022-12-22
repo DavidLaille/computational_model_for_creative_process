@@ -1,6 +1,6 @@
 import functions_v1 as fct
 import numpy as np
-import get_words2remove as find_words
+import find_words as find_words
 
 # Emplacement des modèles word2vec sur Windows et Mac (à modifier si nécessaire)
 location_word2vec_models_windows = "C:/dev/word2vec_pretrained_models/"

@@ -1,4 +1,4 @@
-import get_words2remove as find_words
+import find_words as find_words
 import functions_v1 as fct
 
 

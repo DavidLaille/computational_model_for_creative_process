@@ -1,9 +1,9 @@
 import csv
 
 import numpy as np
+from gensim.models import KeyedVectors
 from matplotlib import pyplot as plt
 
-import functions_v1 as fct
 import pandas as pd
 from computational_model import ComputationalModel
 
@@ -18,20 +18,48 @@ Infos du modèle word2vec pré-entraîné
     cut50           : seuls les mots qui apparaissaient 50 fois ou plus dans le corpus ont été conservés
 """
 
+########################################################################################################################
 # Chargement des mots-indices depuis le fichier csv
 df_cues = pd.read_csv('data/experimental_data/cues.csv', sep=',')
 print("Fichier cues.csv chargé avec succès.")
 cues = df_cues['cues'].tolist()
 
+########################################################################################################################
 # Emplacement des modèles word2vec sur Windows et Mac (à modifier si nécessaire)
 location_word2vec_models_windows = "C:/dev/word2vec_pretrained_models/"
 location_word2vec_models_mac = "/Users/david.laille/dev/word2vec_pretrained_models/"
 location_word2vec_models = location_word2vec_models_mac
 
-pathToModel = location_word2vec_models + "frWac_no_postag_no_phrase_700_skip_cut50_modified.bin"
-word2vec_model = fct.get_model(pathToModel)
+# Liste des modèles word2vec (sans postag) disponibles
+# Modèles lemmatisés issus des sites web français (en .fr)
+word2vec_model_name1 = "frWac_no_postag_no_phrase_700_skip_cut50_modified_2.bin"
+word2vec_model_name2 = "frWac_no_postag_no_phrase_500_cbow_cut100_modified_2.bin"
+
+# Modèles non lemmatisés issus des sites web français (en .fr)
+word2vec_model_name3 = "frWac_non_lem_no_postag_no_phrase_200_cbow_cut100_modified_2.bin"
+word2vec_model_name4 = "frWac_non_lem_no_postag_no_phrase_500_skip_cut100_modified_2.bin"
+
+# Modèles lemmatisés issus du Wikipédia français
+word2vec_model_name5 = "frWiki_no_postag_no_phrase_500_cbow_cut10_modified_2.bin"
+word2vec_model_name6 = "frWiki_no_postag_no_phrase_700_cbow_cut100_modified_2.bin"
+word2vec_model_name7 = "frWiki_no_postag_no_phrase_1000_skip_cut100_modified_2.bin"
+
+# Modèles non lemmatisés issus du Wikipédia français
+word2vec_model_name8 = "frWiki_no_lem_no_postag_no_phrase_1000_cbow_cut100_modified_2.bin"
+word2vec_model_name9 = "frWiki_no_lem_no_postag_no_phrase_1000_skip_cut100_modified_2.bin"
+
+# Modèles élaborés par l'équipe DaSciM (Polytechnique Paris - X)
+word2vec_model_name10 = "fr_w2v_web_w5_modified_2.bin"
+word2vec_model_name11 = "fr_w2v_fl_w5_modified_2.bin"
+word2vec_model_name12 = "fr_w2v_web_w20_modified_2.bin"
+# word2vec_model_name13 = "originals/fr_w2v_fl_w20.bin"
+
+pathToWord2vecModel = location_word2vec_models + word2vec_model_name10
+word2vec_model = KeyedVectors.load_word2vec_format(pathToWord2vecModel, binary=True, unicode_errors="ignore")
 print("Modèle word2vec chargé avec succès.")
 
+########################################################################################################################
+# Type de modèle computationnel utilisé
 model_type = 2
 
 ########################################################################################################################
@@ -45,13 +73,12 @@ memory_size = 3
 vocab_size = 3000
 
 nb_neighbours = 5
-nb_max_steps = 100
 method = 3
 
 alpha = 0.5
 gamma = 0.5
 
-nb_try = 67
+nb_try = 10
 
 ########################################################################################################################
 # Création d'un dataframe pour récupérer les données générées par le modèle
@@ -64,17 +91,17 @@ for cue in cues:
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # # si on veut tester un seul mot-indice
-    # word_to_test = "avis"
-    # if cue != word_to_test:
-    #     continue
+    # si on veut tester un seul mot-indice
+    word_to_test = "avis"
+    if cue != word_to_test:
+        continue
 
     # Initialisation du modèle computationnel
     model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
                                adequacy_influence=adequacy_influence,
                                initial_goal_value=initial_goal_value, discounting_rate=discounting_rate,
                                memory_size=memory_size, vocab_size=vocab_size,
-                               nb_neighbours=nb_neighbours, nb_max_steps=nb_max_steps, method=method,
+                               nb_neighbours=nb_neighbours, method=method,
                                alpha=alpha, gamma=gamma)
 
     paths, all_neighbours_data = model.launch_model(cue=cue, nb_try=nb_try)
@@ -138,6 +165,16 @@ f_nb_occurrences_first.close()
 f_nb_occurrences_distant.close()
 
 for cue in cues:
+    # # Si on veut tester seulement un certain nombre de mots-indice
+    # nb_cues = 2
+    # if cue == df['cues'][nb_cues]:
+    #     break
+
+    # si on veut tester un seul mot-indice
+    word_to_test = "avis"
+    if cue != word_to_test:
+        continue
+
     responses_cond1 = cues_and_responses_cond1[cue]
     responses_cond2 = cues_and_responses_cond2[cue]
 

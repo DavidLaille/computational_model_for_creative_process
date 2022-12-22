@@ -117,7 +117,7 @@ for cue in df['cues']:
                                    adequacy_influence=adequacy_influence,
                                    initial_goal_value=initial_goal_value, discounting_rate=discounting_rate,
                                    memory_size=memory_size, vocab_size=vocab_size,
-                                   nb_neighbours=nb_neighbours, nb_max_steps=nb_max_steps, method=method,
+                                   nb_neighbours=nb_neighbours, method=method,
                                    alpha=alpha, gamma=gamma)
 
         paths, all_neighbours_data = model.launch_model(cue=cue, nb_try=nb_try)
