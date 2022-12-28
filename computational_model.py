@@ -356,13 +356,13 @@ def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, metho
     # méthode 3 : identique à la méthode 1 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 3:
-        nb_options = nb_neighbours * 5
+        nb_options = nb_neighbours * 3
         most_similar_words = model.most_similar(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
     # méthode 4 : identique à la méthode 2 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 4:
-        nb_options = nb_neighbours * 5
+        nb_options = nb_neighbours * 3
         most_similar_words = model.most_similar_cosmul(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
 

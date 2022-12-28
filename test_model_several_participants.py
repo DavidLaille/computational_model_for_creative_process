@@ -84,7 +84,7 @@ print("Tailles du lexique des participants : ", vocab_sizes)
 
 nbs_neighbours = np.random.choice(range(2, 10), nb_participants)
 print("Nombre de voisin créé pour chaque participant : ", nbs_neighbours)
-methods = np.random.choice((3, 4), nb_participants)
+methods = np.random.choice((1, 2, 3, 4), nb_participants)
 print("Méthode utilisée pour chaque participant : ", methods)
 
 alpha = 0.5
@@ -97,16 +97,19 @@ nb_try = 1
 cues_and_responses_cond1 = dict()
 cues_and_responses_cond2 = dict()
 
+paths_all_data = pd.DataFrame()
+neighbours_all_data = pd.DataFrame()
+
 for cue in cues:
     # # Si on veut tester seulement un certain nombre de mots-indice
     # nb_cues = 2
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # si on veut tester un seul mot-indice
-    word_to_test = "avis"
-    if cue != word_to_test:
-        continue
+    # # si on veut tester un seul mot-indice
+    # word_to_test = "avis"
+    # if cue != word_to_test:
+    #     continue
 
     paths_all_participants = pd.DataFrame()
     all_neighbours_data_all_participants = pd.DataFrame()
@@ -145,14 +148,14 @@ for cue in cues:
            paths_{cue}.csv                 : fichier csv contenant tous les chemins parcourus pour un mot-indice donné ("cue")
         '''
 
-        os.makedirs(f'data/generated_data/dataframes/sujet_{num_participant}', exist_ok=True)
+        os.makedirs(f'data/generated_data/several_participants/dataframes/sujet_{num_participant}', exist_ok=True)
 
         # print(paths)
-        paths_filename = f'data/generated_data/dataframes/sujet_{num_participant}/paths_{cue}.csv'
+        paths_filename = f'data/generated_data/several_participants/dataframes/sujet_{num_participant}/paths_{cue}.csv'
         paths.to_csv(paths_filename, index=False, sep=',')
 
         # print(all_neighbours_data)
-        all_neighbours_data_filename = f'data/generated_data/dataframes/sujet_{num_participant}/all_neighbours_data_{cue}.csv'
+        all_neighbours_data_filename = f'data/generated_data/several_participants/dataframes/sujet_{num_participant}/all_neighbours_data_{cue}.csv'
         all_neighbours_data.to_csv(all_neighbours_data_filename, index=False, sep=',')
 
         # On ajoute le numéro du participant dans les dataframes
@@ -164,22 +167,31 @@ for cue in cues:
         paths_all_participants = pd.concat([paths_all_participants, paths], ignore_index=True)
         all_neighbours_data_all_participants = pd.concat([all_neighbours_data_all_participants, all_neighbours_data], ignore_index=True)
 
+        if num_participant == nb_participants - 1:  # si c'est le dernier participant
+            paths_all_participants_filename = f'data/generated_data/several_participants/dataframes/all_subjects/paths/{cue}_all_paths.csv'
+            paths_all_participants.to_csv(paths_all_participants_filename, index=False, sep=',')
+            all_neighbours_data_all_participants_filename = f'data/generated_data/several_participants/dataframes/all_subjects/neighbours_data/{cue}_all_neighbours_data.csv'
+            all_neighbours_data_all_participants.to_csv(all_neighbours_data_all_participants_filename, index=False, sep=',')
+
+            paths_all_data = pd.concat([paths_all_data, paths_all_participants], ignore_index=True)
+            neighbours_all_data = pd.concat([neighbours_all_data, all_neighbours_data_all_participants], ignore_index=True)
+
     cues_and_responses_cond1[cue] = paths_all_participants['step_1'].tolist()
     cues_and_responses_cond2[cue] = paths_all_participants['best_word'].tolist()
 
-print("All paths for all participants : ", paths_all_participants)
-paths_all_participants_filename = f'data/generated_data/dataframes/tests/paths_{nb_participants}.csv'
-paths_all_participants.to_csv(paths_all_participants_filename, index=False, sep=',')
-print("All neighbours data for all participants : ", all_neighbours_data_all_participants)
-all_neighbours_data_all_participants_filename = f'data/generated_data/dataframes/tests/all_neighbours_data_{nb_participants}.csv'
-all_neighbours_data_all_participants.to_csv(all_neighbours_data_all_participants_filename, index=False, sep=',')
+print("All paths for all participants : ", paths_all_data)
+paths_all_data_filename = f'data/generated_data/several_participants/dataframes/all_subjects/paths_all_data_{nb_participants}.csv'
+paths_all_data.to_csv(paths_all_data_filename, index=False, sep=',')
+print("All neighbours data for all participants : ", neighbours_all_data)
+neighbours_all_data_filename = f'data/generated_data/several_participants/dataframes/all_subjects/neighbours_all_data_{nb_participants}.csv'
+neighbours_all_data.to_csv(neighbours_all_data_filename, index=False, sep=',')
 
 ########################################################################################################################
 # Sauvegarde des données dans un csv nommé responses_by_cue_2_lines.csv
 header = ['cues']
 for num_participant in range(nb_participants):
     header.append("p_" + str(num_participant + 1))
-with open('data/generated_data/responses_by_cue_2_lines.csv', 'w') as f:
+with open('data/generated_data/several_participants/responses_by_cue_2_lines.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerow(header)
 
@@ -204,11 +216,11 @@ nb_max_response = nb_participants
 for i in range(nb_max_response):
     header.append("r_" + str(i+1))
 
-f_nb_occurrences_first = open(f'data/generated_data/nb_occurrences_by_response_first.csv', 'w')
+f_nb_occurrences_first = open(f'data/generated_data/several_participants/nb_occurrences_by_response_first.csv', 'w')
 writer_first = csv.writer(f_nb_occurrences_first)
 writer_first.writerow(header)
 
-f_nb_occurrences_distant = open(f'data/generated_data/nb_occurrences_by_response_distant.csv', 'w')
+f_nb_occurrences_distant = open(f'data/generated_data/several_participants/nb_occurrences_by_response_distant.csv', 'w')
 writer_distant = csv.writer(f_nb_occurrences_distant)
 writer_distant.writerow(header)
 
@@ -221,10 +233,10 @@ for cue in cues:
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # si on veut tester un seul mot-indice
-    word_to_test = "avis"
-    if cue != word_to_test:
-        continue
+    # # si on veut tester un seul mot-indice
+    # word_to_test = "avis"
+    # if cue != word_to_test:
+    #     continue
 
     responses_cond1 = cues_and_responses_cond1[cue]
     responses_cond2 = cues_and_responses_cond2[cue]
@@ -313,7 +325,7 @@ for cue in cues:
 
     ####################################################################################################################
     # Sauvegarde des figures obtenues
-    file_name = f"data/generated_data/images/{cue}_first_and_distant_words.png"
+    file_name = f"data/generated_data/several_participants/images/{cue}_first_and_distant_words.png"
     print(file_name)
     plt.savefig(file_name)
     plt.close(fig_f_and_ch)
@@ -341,7 +353,7 @@ for cue in cues:
     # print("###########################################################################################################")
 
     # Ouverture et écriture dans le fichier nb_occurrences_by_response_first.csv
-    f_nb_occurrences_first = open(f'data/generated_data/nb_occurrences_by_response_first.csv', 'a')
+    f_nb_occurrences_first = open(f'data/generated_data/several_participants/nb_occurrences_by_response_first.csv', 'a')
     writer_first = csv.writer(f_nb_occurrences_first)
 
     writer_first.writerow(row_first_words)
@@ -363,7 +375,7 @@ for cue in cues:
     # print("###########################################################################################################")
 
     # Ouverture et écriture dans le fichier nb_occurrences_by_response_distant.csv
-    f_nb_occurrences_distant = open(f'data/generated_data/nb_occurrences_by_response_distant.csv', 'a')
+    f_nb_occurrences_distant = open(f'data/generated_data/several_participants/nb_occurrences_by_response_distant.csv', 'a')
     writer_distant = csv.writer(f_nb_occurrences_distant)
 
     writer_distant.writerow(row_distant_words)

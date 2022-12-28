@@ -54,7 +54,7 @@ word2vec_model_name11 = "fr_w2v_fl_w5_modified_2.bin"
 word2vec_model_name12 = "fr_w2v_web_w20_modified_2.bin"
 # word2vec_model_name13 = "originals/fr_w2v_fl_w20.bin"
 
-pathToWord2vecModel = location_word2vec_models + word2vec_model_name10
+pathToWord2vecModel = location_word2vec_models + word2vec_model_name1
 word2vec_model = KeyedVectors.load_word2vec_format(pathToWord2vecModel, binary=True, unicode_errors="ignore")
 print("Modèle word2vec chargé avec succès.")
 
@@ -70,15 +70,15 @@ initial_goal_value = 1
 discounting_rate = 0.05  # (1%)
 
 memory_size = 3
-vocab_size = 3000
+vocab_size = 5000
 
 nb_neighbours = 5
-method = 3
+method = 4
 
 alpha = 0.5
 gamma = 0.5
 
-nb_try = 10
+nb_try = 12
 
 ########################################################################################################################
 # Création d'un dataframe pour récupérer les données générées par le modèle
@@ -91,10 +91,10 @@ for cue in cues:
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # si on veut tester un seul mot-indice
-    word_to_test = "avis"
-    if cue != word_to_test:
-        continue
+    # # si on veut tester un seul mot-indice
+    # word_to_test = "avis"
+    # if cue != word_to_test:
+    #     continue
 
     # Initialisation du modèle computationnel
     model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
@@ -113,11 +113,11 @@ for cue in cues:
        paths_{cue}.csv                 : fichier csv contenant tous les chemins parcourus pour un mot-indice donné ("cue")
     '''
     # print(paths)
-    paths_filename = f'data/generated_data/dataframes/paths_{cue}.csv'
+    paths_filename = f'data/generated_data/one_shot/dataframes/paths_{cue}.csv'
     paths.to_csv(paths_filename, index=False, sep=',')
 
     # print(all_neighbours_data)
-    all_neighbours_data_filename = f'data/generated_data/dataframes/all_neighbours_data_{cue}.csv'
+    all_neighbours_data_filename = f'data/generated_data/one_shot/dataframes/all_neighbours_data_{cue}.csv'
     all_neighbours_data.to_csv(all_neighbours_data_filename, index=False, sep=',')
 
     cues_and_responses_cond1[cue] = paths['step_1'].tolist()
@@ -128,7 +128,7 @@ for cue in cues:
 header = ['cues']
 for num_participant in range(nb_try):
     header.append("p_" + str(num_participant + 1))
-with open('data/generated_data/responses_by_cue_2_lines.csv', 'w') as f:
+with open('data/generated_data/one_shot/responses_by_cue_2_lines.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerow(header)
 
@@ -153,11 +153,11 @@ nb_max_response = nb_try
 for i in range(nb_max_response):
     header.append("r_" + str(i+1))
 
-f_nb_occurrences_first = open(f'data/generated_data/nb_occurrences_by_response_first.csv', 'w')
+f_nb_occurrences_first = open(f'data/generated_data/one_shot/nb_occurrences_by_response_first.csv', 'w')
 writer_first = csv.writer(f_nb_occurrences_first)
 writer_first.writerow(header)
 
-f_nb_occurrences_distant = open(f'data/generated_data/nb_occurrences_by_response_distant.csv', 'w')
+f_nb_occurrences_distant = open(f'data/generated_data/one_shot/nb_occurrences_by_response_distant.csv', 'w')
 writer_distant = csv.writer(f_nb_occurrences_distant)
 writer_distant.writerow(header)
 
@@ -170,10 +170,10 @@ for cue in cues:
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # si on veut tester un seul mot-indice
-    word_to_test = "avis"
-    if cue != word_to_test:
-        continue
+    # # si on veut tester un seul mot-indice
+    # word_to_test = "avis"
+    # if cue != word_to_test:
+    #     continue
 
     responses_cond1 = cues_and_responses_cond1[cue]
     responses_cond2 = cues_and_responses_cond2[cue]
@@ -182,7 +182,9 @@ for cue in cues:
     first_words = []
     first_words_nb_occurrences = []
     for response in responses_cond1:
-        if response != response:  # if it's a 'nan'
+        if response == cue:
+            pass
+        elif response != response:  # if it's a 'nan'
             pass
             # print(f"Réponse : {response} - on ne l'ajoute pas à la liste des réponses")
         elif response not in first_words:
@@ -204,7 +206,9 @@ for cue in cues:
     distant_words = []
     distant_words_nb_occurrences = []
     for response in responses_cond2:
-        if response != response:  # if it's a 'nan'
+        if response == cue:
+            pass
+        elif response != response:  # if it's a 'nan'
             pass
             # print(f"Réponse : {response} - on ne l'ajoute pas à la liste des réponses")
         elif response not in distant_words:
@@ -258,7 +262,7 @@ for cue in cues:
 
     ####################################################################################################################
     # Sauvegarde des figures obtenues
-    file_name = f"data/generated_data/images/{cue}_first_and_distant_words.png"
+    file_name = f"data/generated_data/one_shot/images/{cue}_first_and_distant_words.png"
     print(file_name)
     plt.savefig(file_name)
     plt.close(fig_f_and_ch)
@@ -286,7 +290,7 @@ for cue in cues:
     # print("###########################################################################################################")
 
     # Ouverture et écriture dans le fichier nb_occurrences_by_response_first.csv
-    f_nb_occurrences_first = open(f'data/generated_data/nb_occurrences_by_response_first.csv', 'a')
+    f_nb_occurrences_first = open(f'data/generated_data/one_shot/nb_occurrences_by_response_first.csv', 'a')
     writer_first = csv.writer(f_nb_occurrences_first)
 
     writer_first.writerow(row_first_words)
@@ -308,7 +312,7 @@ for cue in cues:
     # print("###########################################################################################################")
 
     # Ouverture et écriture dans le fichier nb_occurrences_by_response_distant.csv
-    f_nb_occurrences_distant = open(f'data/generated_data/nb_occurrences_by_response_distant.csv', 'a')
+    f_nb_occurrences_distant = open(f'data/generated_data/one_shot/nb_occurrences_by_response_distant.csv', 'a')
     writer_distant = csv.writer(f_nb_occurrences_distant)
 
     writer_distant.writerow(row_distant_words)

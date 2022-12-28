@@ -21,11 +21,12 @@ experimental_responses_distant = pd.read_csv('data/experimental_data/nb_occurren
 print("Fichier nb_occurrences_by_response_distant.csv chargé avec succès.")
 
 # Chargement du fichier csv contenant le nombre d'occurrences des réponses générées par le modèle en condition 1 (First)
-generated_responses_first = pd.read_csv('data/generated_data/nb_occurrences_by_response_first.csv', sep=',')
+generated_responses_first = pd.read_csv('data/generated_data/several_participants/nb_occurrences_by_response_first.csv', sep=',')
 print("Fichier nb_occurrences_by_response_first.csv chargé avec succès.")
 
 # Chargement du fichier csv contenant le nombre d'occurrences des réponses générées par le modèle en condition 2 (Distant)
-generated_responses_distant = pd.read_csv('data/generated_data/nb_occurrences_by_response_distant.csv', sep=',')
+generated_responses_distant = pd.read_csv(
+    'data/generated_data/several_participants/nb_occurrences_by_response_distant.csv', sep=',')
 print("Fichier nb_occurrences_by_response_distant.csv chargé avec succès.")
 ########################################################################################################################
 
