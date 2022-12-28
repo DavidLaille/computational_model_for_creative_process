@@ -54,7 +54,7 @@ word2vec_model_name11 = "fr_w2v_fl_w5_modified_2.bin"
 word2vec_model_name12 = "fr_w2v_web_w20_modified_2.bin"
 # word2vec_model_name13 = "originals/fr_w2v_fl_w20.bin"
 
-pathToWord2vecModel = location_word2vec_models + word2vec_model_name1
+pathToWord2vecModel = location_word2vec_models + word2vec_model_name10
 word2vec_model = KeyedVectors.load_word2vec_format(pathToWord2vecModel, binary=True, unicode_errors="ignore")
 print("Modèle word2vec chargé avec succès.")
 
@@ -70,10 +70,10 @@ initial_goal_value = 1
 discounting_rate = 0.05  # (1%)
 
 memory_size = 3
-vocab_size = 5000
+vocab_size = 10000
 
 nb_neighbours = 5
-method = 4
+method = 2
 
 alpha = 0.5
 gamma = 0.5

@@ -49,9 +49,9 @@ word2vec_model_name8 = "frWiki_no_lem_no_postag_no_phrase_1000_cbow_cut100_modif
 word2vec_model_name9 = "frWiki_no_lem_no_postag_no_phrase_1000_skip_cut100_modified_2.bin"
 
 # Modèles élaborés par l'équipe DaSciM (Polytechnique Paris - X)
-word2vec_model_name10 = "originals/fr_w2v_web_w5_modified_2.bin"
-word2vec_model_name11 = "originals/fr_w2v_fl_w5_modified_2.bin"
-word2vec_model_name12 = "originals/fr_w2v_web_w20_modified_2.bin"
+word2vec_model_name10 = "fr_w2v_web_w5_modified_2.bin"
+word2vec_model_name11 = "fr_w2v_fl_w5_modified_2.bin"
+word2vec_model_name12 = "fr_w2v_web_w20_modified_2.bin"
 # word2vec_model_name13 = "originals/fr_w2v_fl_w20.bin"
 
 pathToWord2vecModel = location_word2vec_models + word2vec_model_name2

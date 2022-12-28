@@ -16,8 +16,8 @@ for cue in cues['cues']:
     if cue != word_to_test:
         continue
 
-    paths = pd.read_csv(f'data/dataframes/paths_{cue}.csv', sep=',', header=0)
-    df = pd.read_csv(f'data/dataframes/all_neighbours_data_{cue}.csv', sep=',', header=0)
+    paths = pd.read_csv(f'data/generated_data/one_shot/dataframes/paths_{cue}.csv', sep=',', header=0)
+    df = pd.read_csv(f'data/generated_data/one_shot/dataframes/all_neighbours_data_{cue}.csv', sep=',', header=0)
     # print("paths : ", paths)
     # print("df : ", df)
 
@@ -139,7 +139,7 @@ for cue in cues['cues']:
         # nx.draw_networkx_edge_labels(G, position, edges_label, font_size=6)
 
         # on sauvegarde l'image du chemin parcouru
-        file_name = f"data/images/paths/{paths['cue'][index]}_path_{num_path}.png"
+        file_name = f"data/generated_data/one_shot/images/paths/{paths['cue'][index]}_path_{num_path}.png"
         print(file_name)
         print("#######################################################################################################")
 
