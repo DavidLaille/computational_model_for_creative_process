@@ -65,6 +65,7 @@ model_type = 2
 ########################################################################################################################
 # Initialisation des paramètres du modèle computationnel
 adequacy_influence = 0.65
+delta = 0.62
 
 initial_goal_value = 1
 discounting_rate = 0.05  # (1%)
@@ -72,8 +73,8 @@ discounting_rate = 0.05  # (1%)
 memory_size = 3
 vocab_size = 10000
 
-nb_neighbours = 5
-method = 2
+nb_neighbours = 3
+method = 5
 
 alpha = 0.5
 gamma = 0.5
@@ -91,14 +92,14 @@ for cue in cues:
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # # si on veut tester un seul mot-indice
-    # word_to_test = "avis"
-    # if cue != word_to_test:
-    #     continue
+    # si on veut tester un seul mot-indice
+    word_to_test = "avis"
+    if cue != word_to_test:
+        continue
 
     # Initialisation du modèle computationnel
     model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
-                               adequacy_influence=adequacy_influence,
+                               adequacy_influence=adequacy_influence, delta=delta,
                                initial_goal_value=initial_goal_value, discounting_rate=discounting_rate,
                                memory_size=memory_size, vocab_size=vocab_size,
                                nb_neighbours=nb_neighbours, method=method,
@@ -170,10 +171,10 @@ for cue in cues:
     # if cue == df['cues'][nb_cues]:
     #     break
 
-    # # si on veut tester un seul mot-indice
-    # word_to_test = "avis"
-    # if cue != word_to_test:
-    #     continue
+    # si on veut tester un seul mot-indice
+    word_to_test = "avis"
+    if cue != word_to_test:
+        continue
 
     responses_cond1 = cues_and_responses_cond1[cue]
     responses_cond2 = cues_and_responses_cond2[cue]

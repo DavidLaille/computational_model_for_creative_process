@@ -68,7 +68,7 @@ Paramètres du modèle
 
 class ComputationalModel:
     def __init__(self, word2vec_model, model_type=2,
-                 adequacy_influence=0.5,
+                 adequacy_influence=0.5, delta=0.65,
                  initial_goal_value=1, discounting_rate=0.07,
                  memory_size=7, vocab_size=10000,
                  nb_neighbours=5, method=3,
@@ -78,6 +78,7 @@ class ComputationalModel:
         self.model_type = model_type
 
         self.adequacy_influence = adequacy_influence
+        self.delta = delta
 
         self.initial_goal_value = initial_goal_value
         self.discounting_rate = discounting_rate  # (1%)
@@ -170,9 +171,9 @@ class ComputationalModel:
                 neighbours, similarities = get_neighbours_and_similarities(
                     words_in_memory, self.word2vec_model, self.nb_neighbours, self.vocab_size, self.method)
                 adequacies, originalities, likeabilities = get_adequacy_originality_and_likeability(
-                    neighbours, similarities, self.adequacy_influence)
+                    neighbours, similarities, self.adequacy_influence, self.delta)
                 likeability_to_cue = get_likeability_to_cue(self.word2vec_model, cue, current_word,
-                                                            self.adequacy_influence)
+                                                            self.adequacy_influence, self.delta)
 
                 # on remplit le dataframe avec les données obtenues
                 self.neighbours_data['neighbours'] = neighbours
@@ -260,7 +261,7 @@ class ComputationalModel:
                 num_step += 1
 
             last_likeability_to_cue = get_likeability_to_cue(self.word2vec_model, cue, current_word,
-                                                             self.adequacy_influence)
+                                                             self.adequacy_influence, self.delta)
 
             neighbours_data_one_path.loc[len(neighbours_data_one_path.axes[0])] = [t + 1, num_step, cue,
                                                                                    best_word, temporary_best_word,
@@ -334,37 +335,39 @@ def create_dico(model):
     return complete_dico
 
 
-def get_max_likeability(word2vec_model, cue, adequacy_influence, vocab_size):
+def get_max_likeability(word2vec_model, cue, adequacy_influence, delta, vocab_size):
     likeabilities = []
     neighbours = word2vec_model.similar_by_key(key=cue, topn=100, restrict_vocab=vocab_size)
     for neighbour in neighbours:
-        likeability = get_likeability_to_cue(word2vec_model, cue, neighbour[0], adequacy_influence)
+        likeability = get_likeability_to_cue(word2vec_model, cue, neighbour[0], adequacy_influence, delta)
         likeabilities.append(likeability)
     max_likeability = max(likeabilities)
 
     return max_likeability
 
 
-def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, method=1):
+def get_neighbours_and_similarities(cue, word2vec_model, nb_neighbours, vocab_size, method=1):
     most_similar_words = []
     # méthode 1 : calcule la similarité en se basant sur le calcul de la "distance" entre les vecteurs
     if method == 1:
-        most_similar_words = model.most_similar(cue, topn=nb_neighbours, restrict_vocab=vocab_size)
+        most_similar_words = word2vec_model.most_similar(cue, topn=nb_neighbours, restrict_vocab=vocab_size)
     # méthode 2 : calcule la similarité en se basant sur le calcul de "multiplication combination" (cosmul)
     elif method == 2:
-        most_similar_words = model.most_similar_cosmul(cue, topn=nb_neighbours, restrict_vocab=vocab_size)
+        most_similar_words = word2vec_model.most_similar_cosmul(cue, topn=nb_neighbours, restrict_vocab=vocab_size)
     # méthode 3 : identique à la méthode 1 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 3:
         nb_options = nb_neighbours * 3
-        most_similar_words = model.most_similar(cue, topn=nb_options, restrict_vocab=vocab_size)
+        most_similar_words = word2vec_model.most_similar(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
     # méthode 4 : identique à la méthode 2 sauf qu'on prend N mots proches
     # et on en sélectionne le nombre désiré (nb_neighbours)
     elif method == 4:
         nb_options = nb_neighbours * 3
-        most_similar_words = model.most_similar_cosmul(cue, topn=nb_options, restrict_vocab=vocab_size)
+        most_similar_words = word2vec_model.most_similar_cosmul(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
+    elif method == 5:
+        most_similar_words = get_phonologic_neighbours(word2vec_model, cue, nb_neighbours)
 
     neighbours = []
     similarities = []
@@ -375,7 +378,70 @@ def get_neighbours_and_similarities(cue, model, nb_neighbours, vocab_size, metho
     return neighbours, similarities
 
 
-def get_adequacy_originality_and_likeability(neighbours, similarities, adequacy_influence):
+def get_phonologic_neighbours(word2vec_model, met_words, nb_neighbours):
+    rimes_r6 = pd.read_csv("dicos/rimes_r6.csv", sep=',')
+    rimes_r5 = pd.read_csv("dicos/rimes_r5.csv", sep=',')
+    rimes_r4 = pd.read_csv("dicos/rimes_r4.csv", sep=',')
+    rimes_r3 = pd.read_csv("dicos/rimes_r3.csv", sep=',')
+    meme_debut_r6 = pd.read_csv("dicos/meme_debut_r6.csv", sep=',')
+    meme_debut_r5 = pd.read_csv("dicos/meme_debut_r5.csv", sep=',')
+    meme_debut_r4 = pd.read_csv("dicos/meme_debut_r4.csv", sep=',')
+    meme_debut_r3 = pd.read_csv("dicos/meme_debut_r3.csv", sep=',')
+
+    # contenants = pd.read_csv("dicos/contenants.csv", sep=',')
+    # contenus = pd.read_csv("dicos/contenus.csv", sep=',')
+    # voisins_phonologiques_r1 = pd.read_csv("dicos/voisins_phonologiques_r1.csv", sep=',')
+    # voisins_phonologiques_r2 = pd.read_csv("dicos/voisins_phonologiques_r2.csv", sep=',')
+
+    potential_neighbours = list()
+    for word in met_words:
+        if word in rimes_r6['Mot']:
+            rimes = rimes_r6[rimes_r6['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.9))
+        elif word in rimes_r5['Mot']:
+            rimes = rimes_r5[rimes_r5['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.8))
+        elif word in rimes_r4['Mot']:
+            rimes = rimes_r4[rimes_r4['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.7))
+        elif word in rimes_r3['Mot']:
+            rimes = rimes_r3[rimes_r3['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.6))
+
+        if word in meme_debut_r6['Mot']:
+            rimes = meme_debut_r6[meme_debut_r6['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.9))
+        elif word in meme_debut_r5['Mot']:
+            rimes = meme_debut_r5[meme_debut_r5['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.8))
+        elif word in meme_debut_r4['Mot']:
+            rimes = meme_debut_r4[meme_debut_r4['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.7))
+        elif word in meme_debut_r3['Mot']:
+            rimes = meme_debut_r3[meme_debut_r3['Mot'] == word].to_list()
+            for rime in rimes:
+                if rime in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((rime, 0.6))
+
+    neighbours = np.random.choice(potential_neighbours, nb_neighbours)
+    return neighbours
+
+
+def get_adequacy_originality_and_likeability(neighbours, similarities, adequacy_influence, delta):
     adequacies = []
     originalities = []
     likeabilities = []
@@ -390,7 +456,7 @@ def get_adequacy_originality_and_likeability(neighbours, similarities, adequacy_
         originalities.append(originality)
 
         # calcul de l'agréabilité de chaque mot voisin
-        likeability = compute_likeability(adequacy, originality, adequacy_influence)
+        likeability = compute_likeability(adequacy, originality, adequacy_influence, delta)
         likeabilities.append(likeability)
 
     return adequacies, originalities, likeabilities
@@ -449,12 +515,12 @@ def compute_originality(similarity):
     return originality
 
 
-def compute_likeability(adequacy, originality, adequacy_influence):
-    delta = 0.62
-    delta = delta + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
+def compute_likeability(adequacy, originality, adequacy_influence, delta):
+    # delta = 0.62
+    d = delta + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
 
-    likeability = (adequacy_influence * (adequacy ** delta)
-                   + (1-adequacy_influence) * (originality ** delta)) ** (1/delta)
+    likeability = (adequacy_influence * (adequacy ** d)
+                   + (1-adequacy_influence) * (originality ** d)) ** (1/d)
 
     return likeability
 
@@ -465,7 +531,7 @@ def get_similarity_between_words(word2vec_model, word1, word2):
     return similarity
 
 
-def get_likeability_to_cue(word2vec_model, cue, word, adequacy_influence):
+def get_likeability_to_cue(word2vec_model, cue, word, adequacy_influence, delta):
     likeability_to_cue = 0
     if cue == word:
         likeability_to_cue = 0
@@ -473,7 +539,7 @@ def get_likeability_to_cue(word2vec_model, cue, word, adequacy_influence):
         similarity = get_similarity_between_words(word2vec_model, cue, word)
         adequacy_to_cue = compute_adequacy(similarity)
         originality_to_cue = compute_originality(similarity)
-        likeability_to_cue = compute_likeability(adequacy_to_cue, originality_to_cue, adequacy_influence)
+        likeability_to_cue = compute_likeability(adequacy_to_cue, originality_to_cue, adequacy_influence, delta)
 
     return likeability_to_cue
 

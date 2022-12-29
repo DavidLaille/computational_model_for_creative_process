@@ -72,6 +72,9 @@ all_neighbours_data_all_participants = pd.DataFrame()
 adequacy_influences = np.random.normal(0.65, 0.10, nb_participants)
 print("Influences de l'adequacy dans le calcul de la likeability : ", adequacy_influences)
 
+deltas = np.random.normal(0.8, 0.10, nb_participants)
+print("Valeur du paramètre 'delta' dans le calcul de la likeability : ", deltas)
+
 initial_goal_values = np.random.normal(1, 0.03, nb_participants)
 print("Valeurs de but (goal_values) initiales : ", initial_goal_values)
 discounting_rates = np.random.normal(0.07, 0.03, nb_participants)
@@ -118,6 +121,7 @@ for cue in cues:
         ####################################################################################################################
         # Initialisation des paramètres du modèle computationnel
         adequacy_influence = adequacy_influences[num_participant]
+        delta = deltas[num_participant]
 
         initial_goal_value = initial_goal_values[num_participant]
         discounting_rate = discounting_rates[num_participant]
@@ -133,7 +137,7 @@ for cue in cues:
 
         # Initialisation du modèle computationnel
         model = ComputationalModel(word2vec_model=word2vec_model, model_type=model_type,
-                                   adequacy_influence=adequacy_influence,
+                                   adequacy_influence=adequacy_influence, delta=delta,
                                    initial_goal_value=initial_goal_value, discounting_rate=discounting_rate,
                                    memory_size=memory_size, vocab_size=vocab_size,
                                    nb_neighbours=nb_neighbours, method=method,
