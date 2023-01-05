@@ -99,6 +99,22 @@ class ComputationalModel:
         self.neighbours_data = pd.DataFrame()
         self.all_neighbours_data = pd.DataFrame()
 
+        # Dataframes pour récupérer les dictionnaires d'homophones
+        self.rimes_r6 = pd.DataFrame()
+        self.rimes_r5 = pd.DataFrame()
+        self.rimes_r4 = pd.DataFrame()
+        self.rimes_r3 = pd.DataFrame()
+        self.rimes_r2 = pd.DataFrame()
+        self.meme_debut_r6 = pd.DataFrame()
+        self.meme_debut_r5 = pd.DataFrame()
+        self.meme_debut_r4 = pd.DataFrame()
+        self.meme_debut_r3 = pd.DataFrame()
+
+        self.contenants = pd.DataFrame()
+        self.contenus = pd.DataFrame()
+        self.voisins_phonologiques_r1 = pd.DataFrame()
+        self.voisins_phonologiques_r2 = pd.DataFrame()
+
     def create_dataframes(self):
         """
         Stockage des données obtenues
@@ -138,6 +154,21 @@ class ComputationalModel:
         col_names_paths.extend(col_likeability)
         self.paths = pd.DataFrame(columns=col_names_paths)
 
+    def load_dicos(self):
+        self.rimes_r6 = pd.read_csv("dicos/rimes_r6.csv", sep=',', engine='python')
+        self.rimes_r5 = pd.read_csv("dicos/rimes_r5.csv", sep=',', engine='python')
+        self.rimes_r4 = pd.read_csv("dicos/rimes_r4.csv", sep=',', engine='python')
+        self.rimes_r3 = pd.read_csv("dicos/rimes_r3.csv", sep=',', engine='python')
+        self.meme_debut_r6 = pd.read_csv("dicos/meme_debut_r6.csv", sep=',', engine='python')
+        self.meme_debut_r5 = pd.read_csv("dicos/meme_debut_r5.csv", sep=',', engine='python')
+        self.meme_debut_r4 = pd.read_csv("dicos/meme_debut_r4.csv", sep=',', engine='python')
+        self.meme_debut_r3 = pd.read_csv("dicos/meme_debut_r3.csv", sep=',', engine='python')
+
+        self.contenants = pd.read_csv("dicos/contenants.csv", sep=',', engine='python')
+        self.contenus = pd.read_csv("dicos/contenus.csv", sep=',', engine='python')
+        self.voisins_phonologiques_r1 = pd.read_csv("dicos/voisins_phonologiques_r1.csv", sep=',', engine='python')
+        self.voisins_phonologiques_r2 = pd.read_csv("dicos/voisins_phonologiques_r2.csv", sep=',', engine='python')
+
     def launch_model(self, cue, nb_try):
         # initialisation des dataframes pour recueillir les données
         self.create_dataframes()
@@ -168,6 +199,11 @@ class ComputationalModel:
             while current_word_likeability < goal_value and num_step < self.nb_max_steps:
                 # on récupère les mots voisins, leur fréquence d'association avec le mot-indice
                 # puis on récupère les valeurs d'adéquation, d'originalité et d'agréabilité
+                # neighbours, similarities = get_neighbours_and_similarities_phonic(
+                #     words_in_memory, self.word2vec_model, self.nb_neighbours,
+                #     self.rimes_r6, self.rimes_r5, self.rimes_r4, self.rimes_r3, self.rimes_r2,
+                #     self.meme_debut_r6, self.meme_debut_r5, self.meme_debut_r4, self.meme_debut_r3,
+                #     self.contenants, self.contenus, self.voisins_phonologiques_r1, self.voisins_phonologiques_r2)
                 neighbours, similarities = get_neighbours_and_similarities(
                     words_in_memory, self.word2vec_model, self.nb_neighbours, self.vocab_size, self.method)
                 adequacies, originalities, likeabilities = get_adequacy_originality_and_likeability(
@@ -366,8 +402,6 @@ def get_neighbours_and_similarities(cue, word2vec_model, nb_neighbours, vocab_si
         nb_options = nb_neighbours * 3
         most_similar_words = word2vec_model.most_similar_cosmul(cue, topn=nb_options, restrict_vocab=vocab_size)
         most_similar_words = random.choices(most_similar_words, k=nb_neighbours)
-    elif method == 5:
-        most_similar_words = get_phonologic_neighbours(word2vec_model, cue, nb_neighbours)
 
     neighbours = []
     similarities = []
@@ -378,67 +412,152 @@ def get_neighbours_and_similarities(cue, word2vec_model, nb_neighbours, vocab_si
     return neighbours, similarities
 
 
-def get_phonologic_neighbours(word2vec_model, met_words, nb_neighbours):
-    rimes_r6 = pd.read_csv("dicos/rimes_r6.csv", sep=',')
-    rimes_r5 = pd.read_csv("dicos/rimes_r5.csv", sep=',')
-    rimes_r4 = pd.read_csv("dicos/rimes_r4.csv", sep=',')
-    rimes_r3 = pd.read_csv("dicos/rimes_r3.csv", sep=',')
-    meme_debut_r6 = pd.read_csv("dicos/meme_debut_r6.csv", sep=',')
-    meme_debut_r5 = pd.read_csv("dicos/meme_debut_r5.csv", sep=',')
-    meme_debut_r4 = pd.read_csv("dicos/meme_debut_r4.csv", sep=',')
-    meme_debut_r3 = pd.read_csv("dicos/meme_debut_r3.csv", sep=',')
-
-    # contenants = pd.read_csv("dicos/contenants.csv", sep=',')
-    # contenus = pd.read_csv("dicos/contenus.csv", sep=',')
-    # voisins_phonologiques_r1 = pd.read_csv("dicos/voisins_phonologiques_r1.csv", sep=',')
-    # voisins_phonologiques_r2 = pd.read_csv("dicos/voisins_phonologiques_r2.csv", sep=',')
-
+def get_neighbours_and_similarities_phonic(met_words, word2vec_model, nb_neighbours,
+                                           rimes_r6, rimes_r5, rimes_r4, rimes_r3, rimes_r2,
+                                           meme_debut_r6, meme_debut_r5, meme_debut_r4, meme_debut_r3,
+                                           contenants, contenus, voisins_phonologiques_r1, voisins_phonologiques_r2):
     potential_neighbours = list()
     for word in met_words:
-        if word in rimes_r6['Mot']:
-            rimes = rimes_r6[rimes_r6['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.9))
-        elif word in rimes_r5['Mot']:
-            rimes = rimes_r5[rimes_r5['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.8))
-        elif word in rimes_r4['Mot']:
-            rimes = rimes_r4[rimes_r4['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.7))
-        elif word in rimes_r3['Mot']:
-            rimes = rimes_r3[rimes_r3['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.6))
+        # print("Word : ", word)
+        if not rimes_r6[rimes_r6['Mot'] == word].empty:
+            index = rimes_r6[rimes_r6['Mot'] == word].index[0]
+            cols = rimes_r6.columns
+            for col in cols:
+                similar_word = rimes_r6[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.9))
+        elif not rimes_r5[rimes_r5['Mot'] == word].empty:
+            index = rimes_r5[rimes_r5['Mot'] == word].index[0]
+            cols = rimes_r5.columns
+            for col in cols:
+                similar_word = rimes_r5[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.85))
+        elif not rimes_r4[rimes_r4['Mot'] == word].empty:
+            index = rimes_r4[rimes_r4['Mot'] == word].index[0]
+            cols = rimes_r4.columns
+            for col in cols:
+                similar_word = rimes_r4[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.8))
+        elif not rimes_r3[rimes_r3['Mot'] == word].empty:
+            index = rimes_r3[rimes_r3['Mot'] == word].index[0]
+            cols = rimes_r3.columns
+            for col in cols:
+                similar_word = rimes_r3[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.75))
+        elif not rimes_r2[rimes_r2['Mot'] == word].empty:
+            index = rimes_r2[rimes_r2['Mot'] == word].index[0]
+            cols = rimes_r2.columns
+            for col in cols:
+                similar_word = rimes_r2[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.7))
 
-        if word in meme_debut_r6['Mot']:
-            rimes = meme_debut_r6[meme_debut_r6['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.9))
-        elif word in meme_debut_r5['Mot']:
-            rimes = meme_debut_r5[meme_debut_r5['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.8))
-        elif word in meme_debut_r4['Mot']:
-            rimes = meme_debut_r4[meme_debut_r4['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.7))
-        elif word in meme_debut_r3['Mot']:
-            rimes = meme_debut_r3[meme_debut_r3['Mot'] == word].to_list()
-            for rime in rimes:
-                if rime in word2vec_model.key_to_index.keys():
-                    potential_neighbours.append((rime, 0.6))
+        if not meme_debut_r6[meme_debut_r6['Mot'] == word].empty:
+            index = meme_debut_r6[meme_debut_r6['Mot'] == word].index[0]
+            cols = meme_debut_r6.columns
+            for col in cols:
+                similar_word = meme_debut_r6[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.9))
+        elif not meme_debut_r5[meme_debut_r5['Mot'] == word].empty:
+            index = meme_debut_r5[meme_debut_r5['Mot'] == word].index[0]
+            cols = meme_debut_r5.columns
+            for col in cols:
+                similar_word = meme_debut_r5[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.85))
+        elif not meme_debut_r4[meme_debut_r4['Mot'] == word].empty:
+            index = meme_debut_r4[meme_debut_r4['Mot'] == word].index[0]
+            cols = meme_debut_r4.columns
+            for col in cols:
+                similar_word = meme_debut_r4[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.8))
+        elif not meme_debut_r3[meme_debut_r3['Mot'] == word].empty:
+            index = meme_debut_r3[meme_debut_r3['Mot'] == word].index[0]
+            cols = meme_debut_r3.columns
+            for col in cols:
+                similar_word = meme_debut_r3[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.75))
 
-    neighbours = np.random.choice(potential_neighbours, nb_neighbours)
-    return neighbours
+        if not voisins_phonologiques_r1[voisins_phonologiques_r1['Mot'] == word].empty:
+            index = voisins_phonologiques_r1[voisins_phonologiques_r1['Mot'] == word].index[0]
+            cols = voisins_phonologiques_r1.columns
+            for col in cols:
+                similar_word = voisins_phonologiques_r1[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.9))
+
+        if not voisins_phonologiques_r2[voisins_phonologiques_r2['Mot'] == word].empty:
+            index = voisins_phonologiques_r2[voisins_phonologiques_r2['Mot'] == word].index[0]
+            cols = voisins_phonologiques_r2.columns
+            for col in cols:
+                similar_word = voisins_phonologiques_r2[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.8))
+
+        if not contenants[contenants['Mot'] == word].empty:
+            index = contenants[contenants['Mot'] == word].index[0]
+            cols = contenants.columns
+            for col in cols:
+                similar_word = contenants[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.95))
+
+        if not contenus[contenus['Mot'] == word].empty:
+            index = contenus[contenus['Mot'] == word].index[0]
+            cols = contenus.columns
+            for col in cols:
+                similar_word = contenus[col].loc[index]
+                if similar_word != similar_word or similar_word is None:
+                    break
+                elif similar_word in word2vec_model.key_to_index.keys():
+                    potential_neighbours.append((similar_word, 0.85))
+
+    # print("Potential neighbours : ", potential_neighbours)
+    # print("Potential neighbours ordered : ", sorted(potential_neighbours, key=lambda x: (x[1], x[1]), reverse=True))
+    potential_neighbours = sorted(potential_neighbours, key=lambda x: (x[1], x[1]), reverse=True)
+
+    if len(potential_neighbours) > 1:
+        most_similar_words = random.choices(potential_neighbours[0:30], k=nb_neighbours)
+    else:
+        most_similar_words = word2vec_model.most_similar(met_words, topn=nb_neighbours)
+
+    neighbours = []
+    similarities = []
+    for word in most_similar_words:
+        neighbours.append(word[0])
+        similarities.append(word[1])
+
+    return neighbours, similarities
 
 
 def get_adequacy_originality_and_likeability(neighbours, similarities, adequacy_influence, delta):
