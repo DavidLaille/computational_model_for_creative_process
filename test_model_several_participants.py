@@ -62,7 +62,7 @@ print("Modèle word2vec chargé avec succès.")
 # Type de modèle computationnel utilisé
 model_type = 2
 
-nb_participants = 10
+nb_participants = 100
 
 paths_all_participants = pd.DataFrame()
 all_neighbours_data_all_participants = pd.DataFrame()
@@ -82,7 +82,7 @@ print("Taux de décroissance de la valeur de but : ", discounting_rates)
 
 memory_sizes = np.random.choice(range(5, 10), nb_participants)
 print("Tailles de la mémoire de travail : ", memory_sizes)
-vocab_sizes = np.random.choice(range(500, 30000), nb_participants)
+vocab_sizes = np.random.choice(range(500, 40000), nb_participants)
 print("Tailles du lexique des participants : ", vocab_sizes)
 
 nbs_neighbours = np.random.choice(range(2, 10), nb_participants)

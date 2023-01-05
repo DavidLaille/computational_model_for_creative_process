@@ -134,21 +134,24 @@ class ComputationalModel:
                Lignes              : une ligne par chemin parcouru
         """
         # Création du dataframe : neighbours_data
-        col_names = ['num_path', 'num_step', 'cue', 'best_word', 'temporary_best_word', 'q-value', 'current_word', 'neighbours',
-                     'similarity', 'adequacy', 'originality', 'likeability', 'likeability_to_cue', 'goal_value']
+        col_names = ['num_path', 'num_step', 'cue', 'best_word', 'temporary_best_word', 'q-value', 'current_word',
+                     'neighbours',
+                     'similarity', 'adequacy', 'originality', 'likeability',
+                     'similarity_to_cue', 'adequacy_to_cue', 'originality_to_cue', 'likeability_to_cue',
+                     'goal_value']
         self.neighbours_data = pd.DataFrame(columns=col_names)
 
         # Création du dataframe : paths
         col_names_paths = ['num_path', 'nb_steps',
-                           'best_word', 'sim_best_word', 'li_best_word',
+                           'best_word', 'sim_best_word', 'adequacy_best_word', 'originality_best_word', 'li_best_word',
                            'final_goal_value', 'q-value', 'cue']
         col_steps = list()
         col_similarity = list()
         col_likeability = list()
         for i in range(self.nb_max_steps):
             col_steps.append("step_" + str(i + 1))  # on démarrera l'indexation à step_1
-            col_similarity.append("similarity_" + str(i + 1))  # on démarrera l'indexation à similarity_1
-            col_likeability.append("likeability_" + str(i + 1))  # on démarrera l'indexation à likeability_1
+            col_similarity.append("sim_" + str(i + 1))  # on démarrera l'indexation à sim_1
+            col_likeability.append("li_" + str(i + 1))  # on démarrera l'indexation à li_1
         col_names_paths.extend(col_steps)
         col_names_paths.extend(col_similarity)
         col_names_paths.extend(col_likeability)
@@ -173,43 +176,73 @@ class ComputationalModel:
         # initialisation des dataframes pour recueillir les données
         self.create_dataframes()
 
+        # un booléen pour activer ou désactiver l'utilisation des voisins phonologiques
+        phonic_similarity = False
+        # chargement des dictionnaires d'homophones
+        if phonic_similarity:
+            self.load_dicos()
+
         num_path = 0
 
         for t in range(nb_try):
             # initialisation des variables
-            likeability_to_cue = 0
             goal_value = self.initial_goal_value
-            current_word = cue
-            current_word_likeability = 0
-            current_word_similarity = 0
             num_step = 0
             q_value = 0
-            # une variable pour représenter le mot final choisi par le modèle
+
+            # des variables pour représenter le mot actuel considéré par le modèle
+            current_word = cue
+            current_word_similarity = 0
+            current_word_adequacy = 0
+            current_word_originality = 0
+            current_word_likeability = 0
+
+            # des variables pour représenter le mot final choisi par le modèle
             best_word = current_word
+            best_word_similarity = current_word_similarity
+            best_word_adequacy = current_word_adequacy
+            best_word_originality = current_word_originality
             best_word_likeability = current_word_likeability
+
+            # des variables pour représenter le mot choisi par le modèle pendant le processus de recherche/exploration
             temporary_best_word = current_word
+            temporary_best_word_similarity = current_word_similarity
+            temporary_best_word_adequacy = current_word_adequacy
+            temporary_best_word_originality = current_word_originality
             temporary_best_word_likeability = current_word_likeability
+
             # une liste pour stocker les mots déjà visités, initialisé avec le mot-indice
             words_in_memory = [current_word]
+
             # on (ré-)initialise la liste des mots visités
             # puis on y ajoute le mot-indice et sa valeur d'agréabilité
             visited_words = list()
-            visited_words.append([current_word, current_word_likeability, current_word_similarity])
+            visited_words.append([current_word, current_word_similarity,
+                                  current_word_adequacy, current_word_originality, current_word_likeability])
+
+            # un dataframe pour stocker un unique chemin
             neighbours_data_one_path = pd.DataFrame()
+
+            ############################################################################################################
+            # BOUCLE PRINCIPALE DU MODELE
             while current_word_likeability < goal_value and num_step < self.nb_max_steps:
                 # on récupère les mots voisins, leur fréquence d'association avec le mot-indice
                 # puis on récupère les valeurs d'adéquation, d'originalité et d'agréabilité
-                # neighbours, similarities = get_neighbours_and_similarities_phonic(
-                #     words_in_memory, self.word2vec_model, self.nb_neighbours,
-                #     self.rimes_r6, self.rimes_r5, self.rimes_r4, self.rimes_r3, self.rimes_r2,
-                #     self.meme_debut_r6, self.meme_debut_r5, self.meme_debut_r4, self.meme_debut_r3,
-                #     self.contenants, self.contenus, self.voisins_phonologiques_r1, self.voisins_phonologiques_r2)
-                neighbours, similarities = get_neighbours_and_similarities(
-                    words_in_memory, self.word2vec_model, self.nb_neighbours, self.vocab_size, self.method)
+
+                if phonic_similarity:
+                    neighbours, similarities = get_neighbours_and_similarities_phonic(
+                        words_in_memory, self.word2vec_model, self.nb_neighbours,
+                        self.rimes_r6, self.rimes_r5, self.rimes_r4, self.rimes_r3, self.rimes_r2,
+                        self.meme_debut_r6, self.meme_debut_r5, self.meme_debut_r4, self.meme_debut_r3,
+                        self.contenants, self.contenus, self.voisins_phonologiques_r1, self.voisins_phonologiques_r2)
+                else:
+                    neighbours, similarities = get_neighbours_and_similarities(
+                        words_in_memory, self.word2vec_model, self.nb_neighbours, self.vocab_size, self.method)
+
                 adequacies, originalities, likeabilities = get_adequacy_originality_and_likeability(
                     neighbours, similarities, self.adequacy_influence, self.delta)
-                likeability_to_cue = get_likeability_to_cue(self.word2vec_model, cue, current_word,
-                                                            self.adequacy_influence, self.delta)
+                similarity_to_cue, adequacy_to_cue, originality_to_cue, likeability_to_cue = get_similarity_adequacy_originality_likeability_to_cue(
+                    self.word2vec_model, cue, current_word, self.adequacy_influence, self.delta)
 
                 # on remplit le dataframe avec les données obtenues
                 self.neighbours_data['neighbours'] = neighbours
@@ -226,6 +259,9 @@ class ComputationalModel:
                 self.neighbours_data['q-value'] = q_value
                 # self.neighbours_data['current_word'] = current_word
                 self.neighbours_data['current_word'] = current_word + '_' + str(num_step)
+                self.neighbours_data['similarity_to_cue'] = similarity_to_cue
+                self.neighbours_data['adequacy_to_cue'] = adequacy_to_cue
+                self.neighbours_data['originality_to_cue'] = originality_to_cue
                 self.neighbours_data['likeability_to_cue'] = likeability_to_cue
                 self.neighbours_data['goal_value'] = goal_value
                 # print("Mots en mémoire : ", words_in_memory)
@@ -234,39 +270,75 @@ class ComputationalModel:
                 # on met toutes les infos des mots proches dans deux dataframes globaux
                 # neighbours_data_one_path  : récupère les données pour un seul chemin dans le réseau
                 # all_neighbours_data       : récupère les données pour tous les chemins dans le réseau
-                neighbours_data_one_path = pd.concat((neighbours_data_one_path, self.neighbours_data), ignore_index=True)
-                self.all_neighbours_data = pd.concat((self.all_neighbours_data, self.neighbours_data), ignore_index=True)
+                neighbours_data_one_path = pd.concat((neighbours_data_one_path, self.neighbours_data),
+                                                     ignore_index=True)
+                self.all_neighbours_data = pd.concat((self.all_neighbours_data, self.neighbours_data),
+                                                     ignore_index=True)
 
                 # on met à jour la q-value
                 q_value = update_q_value(current_word_likeability, q_value, goal_value, self.neighbours_data,
                                          self.alpha, self.gamma)
 
                 # on passe du mot-indice au mot-voisin avec la plus grande agréabilité/désirabilité (likeability)
-                current_word, current_word_likeability, current_word_similarity = select_next_word(self.neighbours_data)
+                current_word, current_word_similarity, current_word_adequacy, current_word_originality, current_word_likeability = select_next_word(
+                    self.neighbours_data)
                 # on ajoute le nouveau mot et sa valeur d'agréabilité dans la liste des mots visités
-                visited_words.append([current_word, current_word_likeability, current_word_similarity])
+                visited_words.append([current_word, current_word_similarity,
+                                      current_word_adequacy, current_word_originality, current_word_likeability])
 
+                # Propriétés du mot choisi (actuel et final) selon le type de modèle computationnel utilisé
                 if self.model_type == 0:
                     temporary_best_word = current_word
+                    temporary_best_word_similarity = current_word_similarity
+                    temporary_best_word_adequacy = current_word_adequacy
+                    temporary_best_word_originality = current_word_originality
                     temporary_best_word_likeability = current_word_likeability
+
                     best_word = temporary_best_word
+                    best_word_similarity = temporary_best_word_similarity
+                    best_word_adequacy = temporary_best_word_adequacy
+                    best_word_originality = temporary_best_word_originality
                     best_word_likeability = temporary_best_word_likeability
                 elif self.model_type == 1:
-                    temporary_best_word, temporary_best_word_likeability = select_best_word(temporary_best_word,
-                                                                                            temporary_best_word_likeability,
-                                                                                            current_word,
-                                                                                            current_word_likeability)
+                    temporary_best_word, temporary_best_word_similarity, \
+                    temporary_best_word_adequacy, temporary_best_word_originality, \
+                    temporary_best_word_likeability = select_best_word(temporary_best_word,
+                                                                       temporary_best_word_similarity,
+                                                                       temporary_best_word_adequacy,
+                                                                       temporary_best_word_originality,
+                                                                       temporary_best_word_likeability,
+                                                                       current_word,
+                                                                       current_word_similarity,
+                                                                       current_word_adequacy,
+                                                                       current_word_originality,
+                                                                       current_word_likeability)
+
                     best_word = temporary_best_word
+                    best_word_similarity = temporary_best_word_similarity
+                    best_word_adequacy = temporary_best_word_adequacy
+                    best_word_originality = temporary_best_word_originality
                     best_word_likeability = temporary_best_word_likeability
                 elif self.model_type == 2:
                     temporary_best_word = current_word
+                    temporary_best_word_similarity = current_word_similarity
+                    temporary_best_word_adequacy = current_word_adequacy
+                    temporary_best_word_originality = current_word_originality
                     temporary_best_word_likeability = current_word_likeability
+
                     best_word = temporary_best_word
+                    best_word_similarity = temporary_best_word_similarity
+                    best_word_adequacy = temporary_best_word_adequacy
+                    best_word_originality = temporary_best_word_originality
                     best_word_likeability = temporary_best_word_likeability
                 elif self.model_type == 3:
-                    temporary_best_word, temporary_best_word_likeability = select_best_word_among_all_visited_words(
-                        neighbours_data_one_path)
+                    temporary_best_word, temporary_best_word_similarity, \
+                    temporary_best_word_adequacy, temporary_best_word_originality, \
+                    temporary_best_word_likeability = select_best_word_among_all_visited_words(neighbours_data_one_path)
+
                     best_word = temporary_best_word
+                    best_word_similarity = temporary_best_word_similarity
+                    best_word_adequacy = temporary_best_word_adequacy
+                    best_word_originality = temporary_best_word_originality
                     best_word_likeability = temporary_best_word_likeability
 
                 # on ajoute le mot dans la liste des mots en mémoire
@@ -296,35 +368,44 @@ class ComputationalModel:
 
                 num_step += 1
 
-            last_likeability_to_cue = get_likeability_to_cue(self.word2vec_model, cue, current_word,
-                                                             self.adequacy_influence, self.delta)
+            # FIN BOUCLE PRINCIPALE
+            ############################################################################################################
+
+            last_similarity_to_cue, \
+            last_adequacy_to_cue, last_originality_to_cue, \
+            last_likeability_to_cue = get_similarity_adequacy_originality_likeability_to_cue(
+                self.word2vec_model, cue, current_word, self.adequacy_influence, self.delta)
 
             neighbours_data_one_path.loc[len(neighbours_data_one_path.axes[0])] = [t + 1, num_step, cue,
                                                                                    best_word, temporary_best_word,
                                                                                    q_value, current_word,
                                                                                    None, None, None, None, None,
+                                                                                   last_similarity_to_cue,
+                                                                                   last_adequacy_to_cue,
+                                                                                   last_originality_to_cue,
                                                                                    last_likeability_to_cue,
                                                                                    goal_value]
             # print(neighbours_data_one_path)
 
-            if self.model_type == 2:
+            if self.model_type == 2 or self.model_type == 3:
                 # à la fin, on choisit le meilleur des mots parmi tous les mots parcourus
                 # meilleur mot = celui qui a la plus grande valeur d'agréabilité (likeability) parmi tous les mots parcourus
-                best_word, best_word_likeability = select_best_word_among_all_visited_words(neighbours_data_one_path)
-            elif self.model_type == 3:
-                # à la fin, on choisit le meilleur des mots parmi tous les mots parcourus
-                # meilleur mot = celui qui a la plus grande valeur d'agréabilité (likeability) parmi tous les mots parcourus
-                best_word, best_word_likeability = select_best_word_among_all_visited_words(neighbours_data_one_path)
+                best_word, best_word_similarity, \
+                best_word_adequacy, best_word_originality, \
+                best_word_likeability = select_best_word_among_all_visited_words(neighbours_data_one_path)
 
             # on rajoute une ligne dans le dataframe pour prendre en considération les dernières valeurs obtenues
             self.all_neighbours_data.loc[len(self.all_neighbours_data.axes[0])] = [t + 1, num_step, cue,
                                                                                    best_word, temporary_best_word,
                                                                                    q_value, current_word,
                                                                                    None, None, None, None, None,
+                                                                                   last_similarity_to_cue,
+                                                                                   last_adequacy_to_cue,
+                                                                                   last_originality_to_cue,
                                                                                    last_likeability_to_cue,
                                                                                    goal_value]
 
-            best_word_similarity = get_similarity_between_words(self.word2vec_model, cue, best_word)
+            # best_word_similarity = get_similarity_between_words(self.word2vec_model, cue, best_word)
 
             print("Mots visités : ", visited_words)
             print("Nombre de steps : ", num_step)
@@ -337,7 +418,7 @@ class ComputationalModel:
             print("Final q-value : ", q_value)
 
             row = [num_path + 1, num_step,
-                   best_word, best_word_similarity, best_word_likeability,
+                   best_word, best_word_similarity, best_word_adequacy, best_word_originality, best_word_likeability,
                    goal_value, q_value, cue]
             for i in range(self.nb_max_steps):
                 if i + 1 <= num_step:
@@ -375,7 +456,8 @@ def get_max_likeability(word2vec_model, cue, adequacy_influence, delta, vocab_si
     likeabilities = []
     neighbours = word2vec_model.similar_by_key(key=cue, topn=100, restrict_vocab=vocab_size)
     for neighbour in neighbours:
-        likeability = get_likeability_to_cue(word2vec_model, cue, neighbour[0], adequacy_influence, delta)
+        similarity, adequacy, originality, likeability = get_similarity_adequacy_originality_likeability_to_cue(
+            word2vec_model, cue, neighbour[0], adequacy_influence, delta)
         likeabilities.append(likeability)
     max_likeability = max(likeabilities)
 
@@ -596,17 +678,17 @@ def get_random_adequacy_originality_and_likeability(neighbours, adequacy_influen
         originalities.append(originality)
 
         # calcul de l'agréabilité de chaque mot voisin
-        likeability = adequacy_influence * adequacy + (1-adequacy_influence) * originality
+        likeability = adequacy_influence * adequacy + (1 - adequacy_influence) * originality
         likeabilities.append(likeability)
 
     return adequacies, originalities, likeabilities
 
 
 def compute_adequacy(similarity):
-    muA_3 = 1.2     # coefficient multiplicateur de sim^3
-    muA_2 = -1.8    # coefficient multiplicateur de sim^2
-    muA_1 = 1       # coefficient multiplicateur de sim^1
-    muA_0 = 0.7     # coefficient multiplicateur de sim^0
+    muA_3 = 1.2  # coefficient multiplicateur de sim^3
+    muA_2 = -1.8  # coefficient multiplicateur de sim^2
+    muA_1 = 1  # coefficient multiplicateur de sim^1
+    muA_0 = 0.7  # coefficient multiplicateur de sim^0
     adequacy = muA_3 * similarity ** 3 + muA_2 * similarity ** 2 + muA_1 * similarity + muA_0
     adequacy = adequacy + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
 
@@ -619,10 +701,10 @@ def compute_adequacy(similarity):
 
 
 def compute_originality(similarity):
-    muO_3 = -0.5    # coefficient multiplicateur de sim^3
-    muO_2 = 1       # coefficient multiplicateur de sim^2
-    muO_1 = -1.3    # coefficient multiplicateur de sim^1
-    muO_0 = 0.8     # coefficient multiplicateur de sim^0
+    muO_3 = -0.5  # coefficient multiplicateur de sim^3
+    muO_2 = 1  # coefficient multiplicateur de sim^2
+    muO_1 = -1.3  # coefficient multiplicateur de sim^1
+    muO_0 = 0.8  # coefficient multiplicateur de sim^0
     originality = muO_3 * similarity ** 3 + muO_2 * similarity ** 2 + muO_1 * similarity + muO_0
     originality = originality + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
 
@@ -639,7 +721,7 @@ def compute_likeability(adequacy, originality, adequacy_influence, delta):
     d = delta + float(random.randint(-100, 100)) / 1000.0  # ajout d'incertitude
 
     likeability = (adequacy_influence * (adequacy ** d)
-                   + (1-adequacy_influence) * (originality ** d)) ** (1/d)
+                   + (1 - adequacy_influence) * (originality ** d)) ** (1 / d)
 
     return likeability
 
@@ -650,17 +732,19 @@ def get_similarity_between_words(word2vec_model, word1, word2):
     return similarity
 
 
-def get_likeability_to_cue(word2vec_model, cue, word, adequacy_influence, delta):
-    likeability_to_cue = 0
+def get_similarity_adequacy_originality_likeability_to_cue(word2vec_model, cue, word, adequacy_influence, delta):
     if cue == word:
+        similarity_to_cue = 1
+        adequacy_to_cue = 1
+        originality_to_cue = 0
         likeability_to_cue = 0
     else:
-        similarity = get_similarity_between_words(word2vec_model, cue, word)
-        adequacy_to_cue = compute_adequacy(similarity)
-        originality_to_cue = compute_originality(similarity)
+        similarity_to_cue = get_similarity_between_words(word2vec_model, cue, word)
+        adequacy_to_cue = compute_adequacy(similarity_to_cue)
+        originality_to_cue = compute_originality(similarity_to_cue)
         likeability_to_cue = compute_likeability(adequacy_to_cue, originality_to_cue, adequacy_influence, delta)
 
-    return likeability_to_cue
+    return similarity_to_cue, adequacy_to_cue, originality_to_cue, likeability_to_cue
 
 
 def update_q_value(current_word_likeability, current_q_value, goal_value, neighbours_data, alpha, gamma):
@@ -689,20 +773,30 @@ def compute_reward(current_word_likeability, next_word_likeability):
 def select_next_word(neighbours_data):
     index_max_value = np.argmax(neighbours_data['likeability'])
     next_word = neighbours_data['neighbours'][index_max_value]
-    next_word_likeability = neighbours_data['likeability'][index_max_value]
     next_word_similarity = neighbours_data['similarity'][index_max_value]
+    next_word_adequacy = neighbours_data['adequacy'][index_max_value]
+    next_word_originality = neighbours_data['originality'][index_max_value]
+    next_word_likeability = neighbours_data['likeability'][index_max_value]
 
-    return next_word, next_word_likeability, next_word_similarity
+    return next_word, next_word_similarity, next_word_adequacy, next_word_originality, next_word_likeability
 
 
-def select_best_word(word1, word1_likeability, word2, word2_likeability):
+def select_best_word(word1, word1_similarity, word1_adequacy, word1_originality, word1_likeability,
+                     word2, word2_similarity, word2_adequacy, word2_originality, word2_likeability):
     selected_word = word1
+    selected_word_similarity = word1_similarity
+    selected_word_adequacy = word1_adequacy
+    selected_word_originality = word1_originality
     selected_word_likeability = word1_likeability
+
     if word1_likeability < word2_likeability:
         selected_word = word2
+        selected_word_similarity = word2_similarity
+        selected_word_adequacy = word2_adequacy
+        selected_word_originality = word2_originality
         selected_word_likeability = word2_likeability
 
-    return selected_word, selected_word_likeability
+    return selected_word, selected_word_similarity, selected_word_adequacy, selected_word_originality, selected_word_likeability
 
 
 def select_best_word_among_all_visited_words(neighbours_data_one_path):
@@ -712,9 +806,12 @@ def select_best_word_among_all_visited_words(neighbours_data_one_path):
         # print("best word avant : ", best_word)
         best_word = best_word[:-1]
         # print("best word après : ", best_word)
+    best_word_similarity = neighbours_data_one_path['similarity_to_cue'][index_max_value]
+    best_word_adequacy = neighbours_data_one_path['adequacy_to_cue'][index_max_value]
+    best_word_originality = neighbours_data_one_path['originality_to_cue'][index_max_value]
     best_word_likeability = neighbours_data_one_path['likeability_to_cue'][index_max_value]
 
-    return best_word, best_word_likeability
+    return best_word, best_word_similarity, best_word_adequacy, best_word_originality, best_word_likeability
 
 
 def discount_goal_value_linear(decrease_amount, goal_value):
@@ -748,7 +845,7 @@ def discount_goal_value_exp(discounting_rate, goal_value):
 
 def discount_goal_value_log(discounting_rate, goal_value):
     # si le discounting_rate est élevé, la diminution de la goal_value sera lente au départ puis très rapide
-    new_goal_value = (math.log(goal_value)/discounting_rate) + 1
+    new_goal_value = (math.log(goal_value) / discounting_rate) + 1
     # new_goal_value = (math.log(goal_value)/2) + 1
     # new_goal_value = (math.log(goal_value)/3) + 1
     # new_goal_value = (math.log(goal_value)/4) + 1

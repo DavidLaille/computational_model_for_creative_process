@@ -9719,7 +9719,28 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/generated_data/several_participants/dataframes/all_subjects/paths/avis_all_paths.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/generated_data/several_participants/dataframes/all_subjects/paths/machine_all_paths.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/generated_data/several_participants/dataframes/all_subjects/paths_all_data_10.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/generated_data/several_participants/dataframes/all_subjects/paths_all_data_100.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

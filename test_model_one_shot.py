@@ -74,7 +74,7 @@ memory_size = 3
 vocab_size = 10000
 
 nb_neighbours = 3
-method = 5
+method = 3
 
 alpha = 0.5
 gamma = 0.5
